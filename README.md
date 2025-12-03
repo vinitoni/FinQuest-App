@@ -162,12 +162,6 @@ As telas incluem:
 
 ---
 
-## 🏷 Licença
-
-Este projeto é licenciado sob a **MIT License**.
-
----
-
 ## 👤 Autor
 
 **Vinícius Toni Rocha**  
