@@ -9,7 +9,7 @@ O objetivo é ajudar iniciantes e investidores intermediários a desenvolver há
 
 O FinQuest combina:
 
-- Microlições rápidas (5–7 min)
+- Microlições
 - Missões gamificadas com XP, níveis e badges
 - Carteira simulada com dinheiro fictício
 - Calculadoras de juros compostos, preço médio e renda fixa
