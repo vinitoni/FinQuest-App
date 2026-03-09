@@ -1677,9 +1677,10 @@ function RankPage({totalWealth,user}){
         {!loading&&list.length===0&&<div style={{padding:24,textAlign:"center",color:"var(--muted)",fontSize:13}}>Nenhum usuário no ranking ainda.</div>}
         {list.map((r,i)=>{
           const isMe=r.id===user?.id;
-          const wealth=r.total_wealth??r.cash??100000;
+          // para o usuário logado usa o valor em tempo real, para os outros usa o salvo no banco
+          const wealth=isMe?totalWealth:(r.total_wealth??r.cash??100000);
           const pnl=wealth-100000;
-          const notInvested=wealth===100000&&r.cash===100000;
+          const notInvested=!isMe&&wealth===100000&&r.cash===100000;
           return(
             <div key={r.id} style={{display:"flex",alignItems:"center",gap:11,padding:"13px 18px",borderBottom:i<list.length-1?"1px solid var(--b)":"none",background:isMe?"rgba(0,214,143,.05)":""}}>
               <div className="syne" style={{width:30,fontSize:16,fontWeight:800,color:i===0?"var(--gold)":i===1?"#C0C0C0":i===2?"#CD7F32":"var(--muted)",textAlign:"center"}}>
