@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { AreaChart, Area, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { createClient } from "@supabase/supabase-js";
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
