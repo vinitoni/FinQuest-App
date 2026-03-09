@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { AreaChart, Area, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { createClient } from "@supabase/supabase-js";
-import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
@@ -334,13 +333,14 @@ function useMarket(){
     const controller = new AbortController();
     const timer = setTimeout(function(){ controller.abort(); }, 10000);
     try{
-      const symbols = TICKERS.join(",");
       const token = import.meta.env.VITE_BRAPI_TOKEN;
-      const url = "https://brapi.dev/api/quote/"+symbols+(token?"?token="+token:"");
-      const res = await fetch(url, {
-        signal: controller.signal,
-        headers: {"Accept":"application/json"},
-      });
+      // Sem token: busca só as 4 ações gratuitas da Brapi
+      // Com token: busca todas
+      const symbols = token ? TICKERS.join(",") : "PETR4,VALE3,ITUB4,MGLU3";
+      const url = "https://brapi.dev/api/quote/"+symbols;
+      const headers = {"Accept":"application/json"};
+      if(token) headers["Authorization"] = "Bearer "+token;
+      const res = await fetch(url, { signal: controller.signal, headers });
       clearTimeout(timer);
       if(!res.ok) throw new Error("HTTP "+res.status);
       const data = await res.json();
