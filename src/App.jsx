@@ -1652,7 +1652,13 @@ function RankPage({totalWealth,user}){
   }
   useEffect(()=>{fetchRank();},[]);
 
-  const myRankIdx=list.findIndex(r=>r.id===user?.id);
+  // reordena no frontend usando o valor em tempo real do usuário logado
+  const sortedList=list.map(r=>({
+    ...r,
+    _wealth: r.id===user?.id ? totalWealth : (r.total_wealth??r.cash??100000)
+  })).sort((a,b)=>b._wealth-a._wealth);
+
+  const myRankIdx=sortedList.findIndex(r=>r.id===user?.id);
   const myPos=myRankIdx===-1?null:myRankIdx+1;
 
   return(
@@ -1675,9 +1681,8 @@ function RankPage({totalWealth,user}){
       <div className="card" style={{padding:0,overflow:"hidden"}}>
         {loading&&<div style={{padding:24,textAlign:"center",color:"var(--muted)",fontSize:13}}>Carregando ranking...</div>}
         {!loading&&list.length===0&&<div style={{padding:24,textAlign:"center",color:"var(--muted)",fontSize:13}}>Nenhum usuário no ranking ainda.</div>}
-        {list.map((r,i)=>{
+        {sortedList.map((r,i)=>{
           const isMe=r.id===user?.id;
-          // para o usuário logado usa o valor em tempo real, para os outros usa o salvo no banco
           const wealth=isMe?totalWealth:(r.total_wealth??r.cash??100000);
           const pnl=wealth-100000;
           const notInvested=!isMe&&wealth===100000&&r.cash===100000;
