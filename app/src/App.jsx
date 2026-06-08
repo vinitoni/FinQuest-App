@@ -1572,7 +1572,7 @@ function NewsPage({stocks,apiStatus}){
                   <div style={{padding:"10px 16px 14px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                     <span style={{fontSize:11,fontWeight:700,padding:"2px 9px",borderRadius:20,
                       background:st.bg,color:st.color}}>{st.icon} {st.label}</span>
-                    <span style={{fontSize:12,color:"var(--g)",fontWeight:600}}>Ler Mais →</span>
+                    <span style={{fontSize:12,color:"var(--g)",fontWeight:600}}>Ler matéria →</span>
                   </div>
                 </div>
               </a>
