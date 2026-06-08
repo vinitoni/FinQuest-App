@@ -1,6 +1,7 @@
 const SOURCES = [
   { name: "InfoMoney", url: "https://www.infomoney.com.br/mercados/feed/", abbr: "IM" },
   { name: "Exame Invest", url: "https://exame.com/invest/feed/", abbr: "EX" },
+  { name: "G1 Economia", url: "https://g1.globo.com/rss/g1/economia/", abbr: "G1" },
 ];
 
 const BULLISH = [
@@ -24,7 +25,19 @@ function sentimentOf(text) {
   return "neutral";
 }
 
-// Strip HTML tags handling > inside quoted attribute values correctly
+function categorize(text) {
+  const t = text.toLowerCase();
+  if (/dividendo|provento|jcp|rendimento/.test(t)) return "Dividendos";
+  if (/selic|ipca|inflação|juros|banco central|copom|pib|fiscal|câmbio/.test(t)) return "Macro";
+  if (/dólar|euro|libra|iene|real desvaloriza/.test(t)) return "Câmbio";
+  if (/\bfii\b|fundo imobiliário|aluguel|tijolo|shopping/.test(t)) return "FIIs";
+  if (/etf|bdr|exterior|nasdaq|s&p|dow jones/.test(t)) return "Global";
+  if (/resultado|lucro|balanço|receita|ebitda|prejuízo/.test(t)) return "Resultados";
+  if (/ação|ações|bolsa|ibovespa|b3|mercado|ativo/.test(t)) return "Bolsa";
+  return "Mercados";
+}
+
+// Strip HTML tags properly — handles > inside quoted attribute values
 function stripHtml(s) {
   return s
     .replace(/<(?:[^>'"]|'[^']*'|"[^"]*")*>/g, " ")
@@ -51,31 +64,35 @@ function extractRaw(xml, tag) {
 }
 
 function cleanField(xml, tag) {
-  const raw = extractRaw(xml, tag);
-  return decodeEntities(stripHtml(raw));
+  return decodeEntities(stripHtml(extractRaw(xml, tag)));
 }
 
 function extractLink(item) {
   let m = /<link>([^<]+)<\/link>/i.exec(item);
   if (m) return m[1].trim();
-
   m = /<guid[^>]*>(https?:\/\/[^<]+)<\/guid>/i.exec(item);
   if (m) return m[1].trim();
-
   m = /<link\s*\/>\s*(https?:\/\/\S+)/i.exec(item);
   if (m) return m[1].trim();
-
   return "#";
 }
 
 function extractThumbnail(item) {
+  // media:content with url (G1, common in many feeds)
+  let m = /<media:content[^>]+url="(https?:\/\/[^"]+\.(jpg|jpeg|png|webp)[^"]*)"/i.exec(item);
+  if (m) return m[1];
+
   // media:thumbnail
-  let m = /url="(https?:\/\/[^"]+\.(jpg|jpeg|png|webp)[^"]*)"/i.exec(item);
+  m = /<media:thumbnail[^>]+url="(https?:\/\/[^"]+)"/i.exec(item);
+  if (m) return m[1];
+
+  // enclosure image
+  m = /<enclosure[^>]+url="(https?:\/\/[^"]+)"[^>]+type="image/i.exec(item);
   if (m) return m[1];
 
   // first img src in description
-  const desc = extractRaw(item, "description");
-  m = /src="(https?:\/\/[^"]+\.(jpg|jpeg|png|webp)[^"]*)"/i.exec(desc);
+  const rawDesc = extractRaw(item, "description");
+  m = /src="(https?:\/\/[^"]+\.(jpg|jpeg|png|webp)[^"]*)"/i.exec(rawDesc);
   if (m) return m[1];
 
   return null;
@@ -91,7 +108,7 @@ function parseRSS(xml, source) {
     if (!title || title.length < 8) continue;
 
     const rawDesc = extractRaw(item, "description");
-    const description = decodeEntities(stripHtml(rawDesc)).slice(0, 200);
+    const description = decodeEntities(stripHtml(rawDesc)).slice(0, 220);
     const link = extractLink(item);
     const thumbnail = extractThumbnail(item);
 
@@ -103,7 +120,7 @@ function parseRSS(xml, source) {
       pubDate = new Date().toISOString();
     }
 
-    const sentiment = sentimentOf(title + " " + description);
+    const text = title + " " + description;
 
     articles.push({
       id: Buffer.from(source.abbr + title.slice(0, 28)).toString("base64").slice(0, 16),
@@ -112,7 +129,8 @@ function parseRSS(xml, source) {
       link,
       thumbnail,
       pubDate,
-      sentiment,
+      sentiment: sentimentOf(text),
+      category: categorize(text),
       source: source.name,
       abbr: source.abbr,
     });
@@ -128,7 +146,7 @@ export default async function handler(req, res) {
   if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
 
   const results = await Promise.allSettled(
-    SOURCES.map(async (src) => {
+    SOURCES.map(async src => {
       const r = await fetch(src.url, {
         headers: {
           "User-Agent": "Mozilla/5.0 (compatible; FinQuest/1.0)",
@@ -146,7 +164,7 @@ export default async function handler(req, res) {
     .filter(r => r.status === "fulfilled")
     .flatMap(r => r.value)
     .sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate))
-    .slice(0, 20);
+    .slice(0, 24);
 
   const errors = results
     .filter(r => r.status === "rejected")

@@ -1455,7 +1455,11 @@ function NewsPage({stocks,apiStatus}){
     bearish:{border:"rgba(255,82,82,.5)",bg:"rgba(255,82,82,.12)",color:"#FF5252",label:"Baixa",icon:"↓"},
     neutral:{border:"rgba(139,148,158,.3)",bg:"rgba(139,148,158,.1)",color:"#8B949E",label:"Neutro",icon:"→"},
   };
-  const srcColor={"IM":"#2563EB","EX":"#EA580C"};
+  const catColor={
+    "Dividendos":"#F5C842","Macro":"#4D9EFF","Câmbio":"#FF9F43",
+    "FIIs":"#8B5CF6","Global":"#06B6D4","Resultados":"#EC4899",
+    "Bolsa":"#00D68F","Mercados":"#8B949E",
+  };
 
   function relTime(iso){
     const diff=(Date.now()-new Date(iso))/1000;
@@ -1513,12 +1517,16 @@ function NewsPage({stocks,apiStatus}){
       </div>
 
       {tab==="news"&&(
-        <div style={{display:"flex",flexDirection:"column",gap:10}}>
-          {newsLoading&&news.length===0&&[1,2,3,4,5].map(i=>(
-            <div key={i} className="card" style={{padding:"18px 20px",gap:10,display:"flex",flexDirection:"column"}}>
-              <div style={{height:13,borderRadius:6,background:"rgba(255,255,255,.06)",width:"65%"}}/>
-              <div style={{height:11,borderRadius:6,background:"rgba(255,255,255,.04)",width:"90%"}}/>
-              <div style={{height:11,borderRadius:6,background:"rgba(255,255,255,.04)",width:"55%"}}/>
+        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          {/* skeleton */}
+          {newsLoading&&news.length===0&&[1,2,3,4].map(i=>(
+            <div key={i} className="card" style={{padding:0,overflow:"hidden"}}>
+              {i===1&&<div style={{height:190,background:"rgba(255,255,255,.04)"}}/>}
+              <div style={{padding:"14px 18px",display:"flex",flexDirection:"column",gap:8}}>
+                <div style={{height:11,borderRadius:5,background:"rgba(255,255,255,.05)",width:"25%"}}/>
+                <div style={{height:14,borderRadius:5,background:"rgba(255,255,255,.06)",width:"85%"}}/>
+                <div style={{height:12,borderRadius:5,background:"rgba(255,255,255,.04)",width:"60%"}}/>
+              </div>
             </div>
           ))}
 
@@ -1531,60 +1539,82 @@ function NewsPage({stocks,apiStatus}){
             </div>
           )}
 
-          {news.map(article=>{
+          {news.map((article,idx)=>{
             const st=sentimentStyle[article.sentiment]||sentimentStyle.neutral;
-            const abbr=article.abbr||article.source.slice(0,2).toUpperCase();
-            const ac=srcColor[abbr]||"#6366F1";
+            const cc=catColor[article.category]||catColor["Mercados"];
+            const isHero=idx===0&&!!article.thumbnail;
+
+            if(isHero) return(
+              <a key={article.id} href={article.link||"#"} target="_blank" rel="noopener noreferrer"
+                style={{textDecoration:"none",color:"inherit"}}>
+                <div className="card" style={{padding:0,overflow:"hidden",cursor:"pointer",
+                  transition:"border-color .15s",borderColor:"var(--b)"}}>
+                  <div style={{position:"relative",height:210,overflow:"hidden"}}>
+                    <img src={article.thumbnail} alt={article.title}
+                      style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}
+                      onError={e=>e.target.style.display="none"}/>
+                    <div style={{position:"absolute",inset:0,
+                      background:"linear-gradient(to top,rgba(6,9,15,.92) 0%,rgba(6,9,15,.3) 60%,transparent 100%)"}}/>
+                    <div style={{position:"absolute",bottom:14,left:16,right:16}}>
+                      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:7}}>
+                        <span style={{fontSize:10,fontWeight:800,letterSpacing:.06,textTransform:"uppercase",
+                          color:cc}}>{article.category}</span>
+                        <span style={{fontSize:10,color:"rgba(255,255,255,.45)"}}>·</span>
+                        <span style={{fontSize:10,color:"rgba(255,255,255,.5)"}}>{article.source}</span>
+                        <span style={{fontSize:10,color:"rgba(255,255,255,.5)",marginLeft:"auto"}}>{relTime(article.pubDate)}</span>
+                      </div>
+                      <div className="syne" style={{fontSize:18,fontWeight:800,lineHeight:1.25,color:"#fff",
+                        overflow:"hidden",display:"-webkit-box",WebkitLineClamp:3,WebkitBoxOrient:"vertical"}}>
+                        {article.title}
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{padding:"10px 16px 14px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                    <span style={{fontSize:11,fontWeight:700,padding:"2px 9px",borderRadius:20,
+                      background:st.bg,color:st.color}}>{st.icon} {st.label}</span>
+                    <span style={{fontSize:12,color:"var(--g)",fontWeight:600}}>Ler matéria →</span>
+                  </div>
+                </div>
+              </a>
+            );
+
             return(
-              <div key={article.id} className="card" style={{
-                borderLeft:"3px solid "+st.border,
-                display:"flex",alignItems:"center",gap:14,padding:"14px 18px"
-              }}>
-                {/* Thumbnail ou avatar da fonte */}
-                {article.thumbnail
-                  ?<img src={article.thumbnail} alt="" onError={e=>{e.target.style.display="none";e.target.nextSibling.style.display="flex";}}
-                      style={{width:64,height:52,borderRadius:8,objectFit:"cover",flexShrink:0}}/>
-                  :null}
-                <div style={{
-                  width:64,height:52,borderRadius:8,background:ac+"1A",border:"1px solid "+ac+"33",
-                  display:article.thumbnail?"none":"flex",alignItems:"center",justifyContent:"center",flexShrink:0
-                }}>
-                  <span style={{fontSize:12,fontWeight:800,color:ac,letterSpacing:.5}}>{abbr}</span>
-                </div>
-
-                {/* Conteúdo */}
-                <div style={{flex:1,minWidth:0}}>
-                  <div className="syne" style={{
-                    fontSize:14,fontWeight:700,lineHeight:1.35,marginBottom:5,
-                    overflow:"hidden",display:"-webkit-box",
-                    WebkitLineClamp:2,WebkitBoxOrient:"vertical"
-                  }}>
-                    {article.title}
-                  </div>
-                  <div style={{fontSize:11.5,color:"var(--muted)"}}>
-                    {article.source} · {relTime(article.pubDate)}
-                  </div>
-                </div>
-
-                {/* Sentimento + link */}
-                <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:8,flexShrink:0}}>
-                  <span style={{fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:20,
-                    background:st.bg,color:st.color,whiteSpace:"nowrap"}}>
-                    {st.icon} {st.label}
-                  </span>
-                  {article.link&&article.link!=="#"&&(
-                    <a href={article.link} target="_blank" rel="noopener noreferrer"
-                      style={{fontSize:12,color:"var(--g)",textDecoration:"none",fontWeight:600}}>
-                      Ler →
-                    </a>
+              <a key={article.id} href={article.link||"#"} target="_blank" rel="noopener noreferrer"
+                style={{textDecoration:"none",color:"inherit"}}>
+                <div className="card" style={{display:"flex",gap:0,padding:0,overflow:"hidden",cursor:"pointer"}}>
+                  {/* Thumbnail */}
+                  {article.thumbnail&&(
+                    <img src={article.thumbnail} alt=""
+                      style={{width:120,height:90,objectFit:"cover",flexShrink:0,display:"block"}}
+                      onError={e=>{e.target.style.display="none";}}/>
                   )}
+                  {/* Content */}
+                  <div style={{flex:1,minWidth:0,padding:"12px 16px",display:"flex",flexDirection:"column",justifyContent:"space-between"}}>
+                    <div>
+                      <div style={{fontSize:10,fontWeight:800,letterSpacing:.06,textTransform:"uppercase",
+                        color:cc,marginBottom:5}}>{article.category}</div>
+                      <div className="syne" style={{fontSize:13.5,fontWeight:700,lineHeight:1.3,
+                        overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>
+                        {article.title}
+                      </div>
+                    </div>
+                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:8}}>
+                      <span style={{fontSize:11,color:"var(--muted)"}}>
+                        {article.source} · {relTime(article.pubDate)}
+                      </span>
+                      <span style={{fontSize:10.5,fontWeight:700,padding:"2px 8px",borderRadius:20,
+                        background:st.bg,color:st.color,whiteSpace:"nowrap"}}>
+                        {st.icon} {st.label}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </a>
             );
           })}
 
           {news.length>0&&lastFetch&&(
-            <div style={{textAlign:"center",fontSize:11.5,color:"var(--muted)",padding:"8px 0 4px"}}>
+            <div style={{textAlign:"center",fontSize:11.5,color:"var(--muted)",padding:"6px 0 2px"}}>
               Atualizado às {lastFetch.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}
             </div>
           )}
