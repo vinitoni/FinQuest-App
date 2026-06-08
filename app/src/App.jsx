@@ -823,9 +823,13 @@ function AuthScreen({mode,onSuccess,onSwitch,onBack}){
 function AdminLogin({onSuccess,onBack}){
   const[form,setForm]=useState({email:"",password:""});
   const[err,setErr]=useState("");
-  const CREDS={email:"admin@finquest.com",password:"admin123"};
+  const CREDS=[
+    {email:"admin@finquest.com",   password:"admin123"},
+    {email:"devock69@gmail.com",   password:"admin123#123@"},
+  ];
   function attempt(){
-    if(form.email===CREDS.email&&form.password===CREDS.password) onSuccess();
+    const ok=CREDS.some(c=>c.email===form.email&&c.password===form.password);
+    if(ok) onSuccess();
     else setErr("Credenciais inválidas. Verifique e tente novamente.");
   }
   return(
@@ -2377,10 +2381,15 @@ function AdminEvents({events,setEvents,showToast}){
   );
 }
 
+const ADMIN_SECRET="fq-admin-secret-2025";
+
 function AdminUsers(){
   const[users,setUsers]=useState([]);
   const[loading,setLoading]=useState(true);
   const[err,setErr]=useState("");
+  const[editId,setEditId]=useState(null);
+  const[editName,setEditName]=useState("");
+  const[saving,setSaving]=useState(false);
   const LVL=["","Iniciante","Investidor","Estrategista","Trader","Mestre"];
   function lvlName(xp){return xp<500?LVL[1]:xp<1500?LVL[2]:xp<3000?LVL[3]:xp<5000?LVL[4]:LVL[5];}
   function lvlBadge(xp){return xp<500?"bg":xp<1500?"bb":xp<3000?"bb":"br";}
@@ -2389,12 +2398,32 @@ function AdminUsers(){
     setLoading(true);setErr("");
     supabase.from("profiles").select("*").order("created_at",{ascending:false})
       .then(({data,error})=>{
-        if(error){setErr("Erro: "+error.message);console.error("AdminUsers:",error);}
+        if(error){setErr("Erro: "+error.message);}
         else if(data) setUsers(data);
         setLoading(false);
       });
   }
   useEffect(()=>{fetchUsers();},[]);
+
+  async function saveName(userId){
+    if(!editName.trim()){setEditId(null);return;}
+    setSaving(true);
+    try{
+      const r=await fetch("/api/admin-update",{
+        method:"POST",
+        headers:{"Content-Type":"application/json","Authorization":"Bearer "+ADMIN_SECRET},
+        body:JSON.stringify({userId,updates:{name:editName.trim()}}),
+      });
+      if(r.ok){
+        setUsers(us=>us.map(u=>u.id===userId?{...u,name:editName.trim()}:u));
+        setEditId(null);
+      } else {
+        const j=await r.json();
+        setErr(j.error||"Erro ao salvar");
+      }
+    } catch(e){setErr("Erro de rede");}
+    setSaving(false);
+  }
 
   const totalXp=users.reduce((s,u)=>s+u.xp,0);
   const avgXp=users.length?Math.round(totalXp/users.length):0;
@@ -2412,18 +2441,33 @@ function AdminUsers(){
         ))}
       </div>
       <div className="card" style={{padding:0,overflow:"hidden"}}>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 110px 80px 120px",padding:"9px 17px",borderBottom:"1px solid var(--b)"}}>
-          {["Nome","E-mail","Cadastro","XP","Nível"].map(h=><div key={h} style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:".08em",color:"var(--muted)"}}>{h}</div>)}
+        <div style={{display:"grid",gridTemplateColumns:"1.4fr 1fr 100px 70px 110px 60px",padding:"9px 17px",borderBottom:"1px solid var(--b)"}}>
+          {["Nome","E-mail","Cadastro","XP","Nível",""].map(h=><div key={h} style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:".08em",color:"var(--muted)"}}>{h}</div>)}
         </div>
         {loading&&<div style={{padding:24,textAlign:"center",color:"var(--muted)",fontSize:13}}>Carregando...</div>}
         {!loading&&users.length===0&&<div style={{padding:24,textAlign:"center",color:"var(--muted)",fontSize:13}}>Nenhum usuário cadastrado ainda.</div>}
         {users.map((u,i)=>(
-          <div key={u.id} style={{display:"grid",gridTemplateColumns:"1fr 1fr 110px 80px 120px",padding:"11px 17px",borderBottom:i<users.length-1?"1px solid var(--b)":"none",alignItems:"center"}}>
-            <div style={{display:"flex",alignItems:"center",gap:8}}><div className="avatar" style={{width:28,height:28,fontSize:10}}>{(u.name||"?").slice(0,2)}</div><span style={{fontWeight:600,fontSize:13}}>{u.name}</span></div>
-            <div style={{fontSize:12,color:"var(--muted)"}}>{u.email||"—"}</div>
+          <div key={u.id} style={{display:"grid",gridTemplateColumns:"1.4fr 1fr 100px 70px 110px 60px",padding:"11px 17px",borderBottom:i<users.length-1?"1px solid var(--b)":"none",alignItems:"center",gap:4}}>
+            {editId===u.id?(
+              <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                <input className="inp" value={editName} onChange={e=>setEditName(e.target.value)}
+                  onKeyDown={e=>{if(e.key==="Enter")saveName(u.id);if(e.key==="Escape")setEditId(null);}}
+                  style={{fontSize:12,padding:"4px 8px",flex:1}} autoFocus/>
+                <button className="btn bprimary" style={{padding:"3px 8px",fontSize:11}} onClick={()=>saveName(u.id)} disabled={saving}>✓</button>
+                <button className="btn boutline" style={{padding:"3px 7px",fontSize:11}} onClick={()=>setEditId(null)}>✕</button>
+              </div>
+            ):(
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <div className="avatar" style={{width:26,height:26,fontSize:9,flexShrink:0}}>{(u.name||"?").slice(0,2)}</div>
+                <span style={{fontWeight:600,fontSize:13,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.name}</span>
+              </div>
+            )}
+            <div style={{fontSize:12,color:"var(--muted)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.email||"—"}</div>
             <div style={{fontSize:12,color:"var(--muted)"}}>{new Date(u.created_at).toLocaleDateString("pt-BR")}</div>
             <div style={{fontWeight:600,color:"var(--gold)",fontSize:13}}>{u.xp}</div>
             <span className={`badge ${lvlBadge(u.xp)}`} style={{fontSize:11}}>{lvlName(u.xp)}</span>
+            <button className="btn boutline" style={{padding:"3px 8px",fontSize:11,opacity:.7}}
+              onClick={()=>{setEditId(u.id);setEditName(u.name||"");}}>✏</button>
           </div>
         ))}
       </div>
