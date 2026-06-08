@@ -16,6 +16,25 @@ const BEARISH = [
   "recessão","inflação","mínima","pressão",
 ];
 
+// Notícias que impactam economia/investidores mesmo não sendo 100% financeiras
+const RELEVANT_KW = [
+  "econom","empresa","mercado","bolsa","ação","ações","invest","banco","financ",
+  "capital","lucro","resultado","receita","balanço","pib","inflação","selic","juros",
+  "petróleo","commodity","câmbio","dólar","euro","exporta","importa","comércio",
+  "industria","varejo","setor","startup","ipo","fii","etf","bdr","dividendo",
+  "tarifa","sanção","regulação","imposto","fiscal","orçamento","reforma",
+  "apple","google","amazon","microsoft","tesla","meta","nvidia","openai","ia ",
+  "inteligência artificial","chip","semicondutor","tecnologia","iphone","android",
+  "petrobras","vale","itaú","bradesco","ambev","weg","magalu","b3 ",
+  "trump","china","fed","copom","banco central","ue ","europa","g7","g20",
+  "crise","recessão","crescimento","empreg","desempreg",
+];
+
+function isRelevant(text) {
+  const t = text.toLowerCase();
+  return RELEVANT_KW.some(kw => t.includes(kw));
+}
+
 function sentimentOf(text) {
   const t = text.toLowerCase();
   const b = BULLISH.filter(w => t.includes(w)).length;
@@ -121,6 +140,7 @@ function parseRSS(xml, source) {
     }
 
     const text = title + " " + description;
+    if (!isRelevant(text)) continue; // descarta notícias sem impacto econômico
 
     articles.push({
       id: Buffer.from(source.abbr + title.slice(0, 28)).toString("base64").slice(0, 16),
