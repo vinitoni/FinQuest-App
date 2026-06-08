@@ -1,19 +1,18 @@
 const SOURCES = [
-  { name: "InfoMoney", url: "https://www.infomoney.com.br/feed/" },
-  { name: "Exame Invest", url: "https://exame.com/invest/feed/" },
+  { name: "InfoMoney", url: "https://www.infomoney.com.br/mercados/feed/", abbr: "IM" },
+  { name: "Exame Invest", url: "https://exame.com/invest/feed/", abbr: "EX" },
 ];
 
 const BULLISH = [
   "alta","sobe","cresce","crescimento","lucro","recorde","supera","valoriza",
   "valorização","ganho","ganhos","dispara","avança","expansão","aprova",
-  "eleva","aumenta","positivo","superávit","recupera","resultado positivo",
-  "bate recorde","máxima","aceleração","contrata","lança",
+  "eleva","aumenta","superávit","recupera","máxima","aceleração",
 ];
 const BEARISH = [
   "queda","cai","recua","baixa","perde","perda","prejuízo","risco",
   "crise","colapso","derrete","desaba","tomba","piora","contrai",
-  "demite","cancela","reduz","corta","negativo","déficit","fraco",
-  "desaceleração","recessão","inflação","mínima","pressão","alerta",
+  "demite","cancela","reduz","corta","déficit","desaceleração",
+  "recessão","inflação","mínima","pressão",
 ];
 
 function sentimentOf(text) {
@@ -25,6 +24,14 @@ function sentimentOf(text) {
   return "neutral";
 }
 
+// Strip HTML tags handling > inside quoted attribute values correctly
+function stripHtml(s) {
+  return s
+    .replace(/<(?:[^>'"]|'[^']*'|"[^"]*")*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function decodeEntities(s) {
   return s
     .replace(/&amp;/g, "&")
@@ -33,34 +40,45 @@ function decodeEntities(s) {
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
     .replace(/&nbsp;/g, " ")
-    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
-    .replace(/<[^>]+>/g, "")
-    .trim();
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)));
 }
 
-function extractField(xml, tag) {
-  const re = new RegExp(
-    `<${tag}[^>]*>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/${tag}>`,
-    "i"
-  );
+function extractRaw(xml, tag) {
+  const re = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i");
   const m = re.exec(xml);
-  return m ? decodeEntities(m[1]) : "";
+  if (!m) return "";
+  return m[1].replace(/^<!\[CDATA\[/, "").replace(/\]\]>$/, "").trim();
+}
+
+function cleanField(xml, tag) {
+  const raw = extractRaw(xml, tag);
+  return decodeEntities(stripHtml(raw));
 }
 
 function extractLink(item) {
-  // <link>url</link>
   let m = /<link>([^<]+)<\/link>/i.exec(item);
   if (m) return m[1].trim();
 
-  // <guid isPermaLink="true">url</guid>
   m = /<guid[^>]*>(https?:\/\/[^<]+)<\/guid>/i.exec(item);
   if (m) return m[1].trim();
 
-  // <link /> … url (some feeds)
   m = /<link\s*\/>\s*(https?:\/\/\S+)/i.exec(item);
   if (m) return m[1].trim();
 
   return "#";
+}
+
+function extractThumbnail(item) {
+  // media:thumbnail
+  let m = /url="(https?:\/\/[^"]+\.(jpg|jpeg|png|webp)[^"]*)"/i.exec(item);
+  if (m) return m[1];
+
+  // first img src in description
+  const desc = extractRaw(item, "description");
+  m = /src="(https?:\/\/[^"]+\.(jpg|jpeg|png|webp)[^"]*)"/i.exec(desc);
+  if (m) return m[1];
+
+  return null;
 }
 
 function parseRSS(xml, source) {
@@ -69,14 +87,15 @@ function parseRSS(xml, source) {
 
   for (const m of items.slice(0, 10)) {
     const item = m[1];
-    const title = extractField(item, "title");
+    const title = cleanField(item, "title");
     if (!title || title.length < 8) continue;
 
-    const description = extractField(item, "description").slice(0, 280);
+    const rawDesc = extractRaw(item, "description");
+    const description = decodeEntities(stripHtml(rawDesc)).slice(0, 200);
     const link = extractLink(item);
-    const pubDateRaw =
-      extractField(item, "pubDate") || extractField(item, "dc:date");
+    const thumbnail = extractThumbnail(item);
 
+    const pubDateRaw = cleanField(item, "pubDate") || cleanField(item, "dc:date");
     let pubDate;
     try {
       pubDate = pubDateRaw ? new Date(pubDateRaw).toISOString() : new Date().toISOString();
@@ -84,14 +103,18 @@ function parseRSS(xml, source) {
       pubDate = new Date().toISOString();
     }
 
+    const sentiment = sentimentOf(title + " " + description);
+
     articles.push({
-      id: Buffer.from(source.name + title.slice(0, 30)).toString("base64").slice(0, 16),
+      id: Buffer.from(source.abbr + title.slice(0, 28)).toString("base64").slice(0, 16),
       title,
       description,
       link,
+      thumbnail,
       pubDate,
-      sentiment: sentimentOf(title + " " + description),
+      sentiment,
       source: source.name,
+      abbr: source.abbr,
     });
   }
 

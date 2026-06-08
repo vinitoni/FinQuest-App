@@ -1451,10 +1451,11 @@ function NewsPage({stocks,apiStatus}){
   const watchedTickers=["PETR4","VALE3","WEGE3","ITUB4","ABEV3"];
 
   const sentimentStyle={
-    bullish:{border:"rgba(0,214,143,.45)",bg:"rgba(0,214,143,.12)",color:"#00D68F",label:"Alta"},
-    bearish:{border:"rgba(255,82,82,.45)",bg:"rgba(255,82,82,.12)",color:"#FF5252",label:"Baixa"},
-    neutral:{border:"rgba(139,148,158,.3)",bg:"rgba(139,148,158,.1)",color:"#8B949E",label:"Neutro"},
+    bullish:{border:"rgba(0,214,143,.5)",bg:"rgba(0,214,143,.12)",color:"#00D68F",label:"Alta",icon:"↑"},
+    bearish:{border:"rgba(255,82,82,.5)",bg:"rgba(255,82,82,.12)",color:"#FF5252",label:"Baixa",icon:"↓"},
+    neutral:{border:"rgba(139,148,158,.3)",bg:"rgba(139,148,158,.1)",color:"#8B949E",label:"Neutro",icon:"→"},
   };
+  const srcColor={"IM":"#2563EB","EX":"#EA580C"};
 
   function relTime(iso){
     const diff=(Date.now()-new Date(iso))/1000;
@@ -1532,35 +1533,52 @@ function NewsPage({stocks,apiStatus}){
 
           {news.map(article=>{
             const st=sentimentStyle[article.sentiment]||sentimentStyle.neutral;
+            const abbr=article.abbr||article.source.slice(0,2).toUpperCase();
+            const ac=srcColor[abbr]||"#6366F1";
             return(
               <div key={article.id} className="card" style={{
                 borderLeft:"3px solid "+st.border,
-                display:"flex",flexDirection:"column",gap:9,padding:"16px 20px"
+                display:"flex",alignItems:"center",gap:14,padding:"14px 18px"
               }}>
-                <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-                  <span style={{fontSize:11,fontWeight:700,padding:"2px 9px",borderRadius:20,
-                    background:st.bg,color:st.color}}>{st.label}</span>
-                  <span style={{fontSize:11.5,color:"var(--muted)",fontWeight:600}}>{article.source}</span>
-                  <span style={{fontSize:11,color:"var(--muted)",marginLeft:"auto"}}>
-                    {relTime(article.pubDate)}
-                  </span>
+                {/* Thumbnail ou avatar da fonte */}
+                {article.thumbnail
+                  ?<img src={article.thumbnail} alt="" onError={e=>{e.target.style.display="none";e.target.nextSibling.style.display="flex";}}
+                      style={{width:64,height:52,borderRadius:8,objectFit:"cover",flexShrink:0}}/>
+                  :null}
+                <div style={{
+                  width:64,height:52,borderRadius:8,background:ac+"1A",border:"1px solid "+ac+"33",
+                  display:article.thumbnail?"none":"flex",alignItems:"center",justifyContent:"center",flexShrink:0
+                }}>
+                  <span style={{fontSize:12,fontWeight:800,color:ac,letterSpacing:.5}}>{abbr}</span>
                 </div>
-                <div className="syne" style={{fontSize:15,fontWeight:700,lineHeight:1.35}}>
-                  {article.title}
-                </div>
-                {article.description&&(
-                  <div style={{fontSize:13,color:"#b8cfe0",lineHeight:1.6,
-                    display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>
-                    {article.description}
+
+                {/* Conteúdo */}
+                <div style={{flex:1,minWidth:0}}>
+                  <div className="syne" style={{
+                    fontSize:14,fontWeight:700,lineHeight:1.35,marginBottom:5,
+                    overflow:"hidden",display:"-webkit-box",
+                    WebkitLineClamp:2,WebkitBoxOrient:"vertical"
+                  }}>
+                    {article.title}
                   </div>
-                )}
-                {article.link&&article.link!=="#"&&(
-                  <a href={article.link} target="_blank" rel="noopener noreferrer"
-                    style={{fontSize:12.5,color:"var(--g)",textDecoration:"none",fontWeight:600,
-                      width:"fit-content"}}>
-                    Ler matéria →
-                  </a>
-                )}
+                  <div style={{fontSize:11.5,color:"var(--muted)"}}>
+                    {article.source} · {relTime(article.pubDate)}
+                  </div>
+                </div>
+
+                {/* Sentimento + link */}
+                <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:8,flexShrink:0}}>
+                  <span style={{fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:20,
+                    background:st.bg,color:st.color,whiteSpace:"nowrap"}}>
+                    {st.icon} {st.label}
+                  </span>
+                  {article.link&&article.link!=="#"&&(
+                    <a href={article.link} target="_blank" rel="noopener noreferrer"
+                      style={{fontSize:12,color:"var(--g)",textDecoration:"none",fontWeight:600}}>
+                      Ler →
+                    </a>
+                  )}
+                </div>
               </div>
             );
           })}
