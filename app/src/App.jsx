@@ -1440,27 +1440,71 @@ function DivCalc(){
   );
 }
 
-// ─── NEWS / WATCHLIST (informational only, no price effect) ─────
-function NewsPage({events,markEvent,stocks}){
-  const[read,setRead]=useState(new Set());
+// ─── NEWS / WATCHLIST ─────────────────────────────────────────────
+function NewsPage({stocks,apiStatus}){
   const[tab,setTab]=useState("news");
+  const[news,setNews]=useState([]);
+  const[newsLoading,setNewsLoading]=useState(false);
+  const[lastFetch,setLastFetch]=useState(null);
+  const loadingRef=useRef(false);
 
   const watchedTickers=["PETR4","VALE3","WEGE3","ITUB4","ABEV3"];
 
-  function markRead(id){
-    setRead(p=>{const s=new Set(p);s.add(id);return s;});
-    const ev=events.find(e=>e.id===id);
-    if(ev) markEvent(ev);
+  const sentimentStyle={
+    bullish:{border:"rgba(0,214,143,.45)",bg:"rgba(0,214,143,.12)",color:"#00D68F",label:"Alta"},
+    bearish:{border:"rgba(255,82,82,.45)",bg:"rgba(255,82,82,.12)",color:"#FF5252",label:"Baixa"},
+    neutral:{border:"rgba(139,148,158,.3)",bg:"rgba(139,148,158,.1)",color:"#8B949E",label:"Neutro"},
+  };
+
+  function relTime(iso){
+    const diff=(Date.now()-new Date(iso))/1000;
+    if(diff<60) return "agora";
+    if(diff<3600) return Math.floor(diff/60)+"min atrás";
+    if(diff<86400) return Math.floor(diff/3600)+"h atrás";
+    return Math.floor(diff/86400)+"d atrás";
   }
+
+  async function loadNews(){
+    if(loadingRef.current) return;
+    loadingRef.current=true;
+    setNewsLoading(true);
+    try{
+      const r=await fetch("/api/news");
+      if(!r.ok) throw new Error("HTTP "+r.status);
+      const d=await r.json();
+      setNews(d.articles||[]);
+      setLastFetch(new Date());
+    }catch(e){
+      // mantém notícias existentes
+    }finally{
+      loadingRef.current=false;
+      setNewsLoading(false);
+    }
+  }
+
+  useEffect(()=>{
+    loadNews();
+    const id=setInterval(loadNews,15*60*1000);
+    return()=>clearInterval(id);
+  },[]);
 
   return(
     <div className="page">
       <div className="topbar">
         <div>
           <div className="ptitle syne">Radar de Mercado</div>
-          <div className="psub">Acompanhe notícias e empresas favoritas</div>
+          <div className="psub">Notícias financeiras em tempo real</div>
         </div>
+        {tab==="news"&&(
+          <button className="btn bghost bsm" onClick={loadNews} disabled={newsLoading}
+            style={{display:"flex",alignItems:"center",gap:6,minWidth:110}}>
+            <span style={{fontSize:15,display:"inline-block",
+              animation:newsLoading?"spin 0.9s linear infinite":undefined}}>↻</span>
+            {newsLoading?"Atualizando...":"Atualizar"}
+          </button>
+        )}
       </div>
+
       <div className="tabs" style={{marginBottom:22,width:"fit-content"}}>
         {[["news","📰 Notícias"],["watch","⭐ Watchlist"]].map(([k,l])=>(
           <button key={k} className={"tab"+(tab===k?" act":"")} onClick={()=>setTab(k)}>{l}</button>
@@ -1469,41 +1513,80 @@ function NewsPage({events,markEvent,stocks}){
 
       {tab==="news"&&(
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
-          {events.map(ev=>(
-            <div key={ev.id} className="card" style={{display:"flex",alignItems:"flex-start",gap:14,opacity:read.has(ev.id)?0.6:1,borderColor:ev.impact==="bullish"?"rgba(0,214,143,.18)":"rgba(255,82,82,.18)"}}>
-              <div style={{width:44,height:44,borderRadius:10,background:ev.impact==="bullish"?"rgba(0,214,143,.1)":"rgba(255,82,82,.1)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{ev.emoji}</div>
-              <div style={{flex:1}}>
-                <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:4,flexWrap:"wrap"}}>
-                  <div className="syne" style={{fontSize:15,fontWeight:700}}>{ev.title}</div>
-                  <span className={"badge "+(ev.impact==="bullish"?"bg":"br")}>{ev.impact==="bullish"?"Positivo":"Negativo"}</span>
-                  {read.has(ev.id)&&<span className="badge" style={{background:"rgba(90,122,158,.1)",color:"var(--muted)"}}>Lido</span>}
-                </div>
-                <div style={{fontSize:13.5,color:"#b8cfe0",lineHeight:1.6,marginBottom:8}}>{ev.desc}</div>
-                <div style={{fontSize:11,color:"var(--muted)"}}>
-                  {ev.impact==="bullish"
-                    ?"📈 Analistas veem potencial de valorização no setor"
-                    :"📉 Pressão vendedora esperada no curto prazo"}
-                </div>
-              </div>
-              <div style={{flexShrink:0}}>
-                {!read.has(ev.id)
-                  ?<button className="btn bghost bsm" onClick={()=>markRead(ev.id)}>Marcar lido</button>
-                  :<span style={{fontSize:12,color:"var(--muted)"}}>✓</span>
-                }
-              </div>
+          {newsLoading&&news.length===0&&[1,2,3,4,5].map(i=>(
+            <div key={i} className="card" style={{padding:"18px 20px",gap:10,display:"flex",flexDirection:"column"}}>
+              <div style={{height:13,borderRadius:6,background:"rgba(255,255,255,.06)",width:"65%"}}/>
+              <div style={{height:11,borderRadius:6,background:"rgba(255,255,255,.04)",width:"90%"}}/>
+              <div style={{height:11,borderRadius:6,background:"rgba(255,255,255,.04)",width:"55%"}}/>
             </div>
           ))}
+
+          {!newsLoading&&news.length===0&&(
+            <div className="card" style={{textAlign:"center",padding:"44px 24px"}}>
+              <div style={{fontSize:34,marginBottom:12}}>📡</div>
+              <div style={{fontWeight:700,fontSize:15,marginBottom:8}}>Nenhuma notícia carregada</div>
+              <div style={{color:"var(--muted)",fontSize:13,marginBottom:18}}>Verifique a conexão e tente novamente</div>
+              <button className="btn bghost bsm" onClick={loadNews}>Tentar novamente</button>
+            </div>
+          )}
+
+          {news.map(article=>{
+            const st=sentimentStyle[article.sentiment]||sentimentStyle.neutral;
+            return(
+              <div key={article.id} className="card" style={{
+                borderLeft:"3px solid "+st.border,
+                display:"flex",flexDirection:"column",gap:9,padding:"16px 20px"
+              }}>
+                <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                  <span style={{fontSize:11,fontWeight:700,padding:"2px 9px",borderRadius:20,
+                    background:st.bg,color:st.color}}>{st.label}</span>
+                  <span style={{fontSize:11.5,color:"var(--muted)",fontWeight:600}}>{article.source}</span>
+                  <span style={{fontSize:11,color:"var(--muted)",marginLeft:"auto"}}>
+                    {relTime(article.pubDate)}
+                  </span>
+                </div>
+                <div className="syne" style={{fontSize:15,fontWeight:700,lineHeight:1.35}}>
+                  {article.title}
+                </div>
+                {article.description&&(
+                  <div style={{fontSize:13,color:"#b8cfe0",lineHeight:1.6,
+                    display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>
+                    {article.description}
+                  </div>
+                )}
+                {article.link&&article.link!=="#"&&(
+                  <a href={article.link} target="_blank" rel="noopener noreferrer"
+                    style={{fontSize:12.5,color:"var(--g)",textDecoration:"none",fontWeight:600,
+                      width:"fit-content"}}>
+                    Ler matéria →
+                  </a>
+                )}
+              </div>
+            );
+          })}
+
+          {news.length>0&&lastFetch&&(
+            <div style={{textAlign:"center",fontSize:11.5,color:"var(--muted)",padding:"8px 0 4px"}}>
+              Atualizado às {lastFetch.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}
+            </div>
+          )}
         </div>
       )}
 
       {tab==="watch"&&(
         <div>
-          <div style={{fontSize:13,color:"var(--muted)",marginBottom:16}}>Acompanhe em tempo real os ativos que você monitora.</div>
+          <div style={{fontSize:13,color:"var(--muted)",marginBottom:16}}>
+            Acompanhe em tempo real os ativos que você monitora.
+          </div>
           <div style={{display:"flex",flexDirection:"column",gap:9}}>
             {stocks.filter(s=>watchedTickers.includes(s.ticker)).map(s=>(
               <div key={s.ticker} className="card" style={{display:"flex",alignItems:"center",gap:14,padding:"16px 20px"}}>
-                <div style={{width:42,height:42,borderRadius:10,background:"rgba(0,214,143,.08)",border:"1px solid rgba(0,214,143,.15)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                  <span className="syne" style={{fontSize:11,fontWeight:800,color:"var(--g)"}}>{s.ticker.slice(0,4)}</span>
+                <div style={{width:42,height:42,borderRadius:10,background:"rgba(0,214,143,.08)",
+                  border:"1px solid rgba(0,214,143,.15)",display:"flex",alignItems:"center",
+                  justifyContent:"center",flexShrink:0}}>
+                  <span className="syne" style={{fontSize:11,fontWeight:800,color:"var(--g)"}}>
+                    {s.ticker.slice(0,4)}
+                  </span>
                 </div>
                 <div style={{flex:1}}>
                   <div style={{fontWeight:700,fontSize:14}}>{s.name}</div>
@@ -1518,8 +1601,11 @@ function NewsPage({events,markEvent,stocks}){
               </div>
             ))}
           </div>
-          <div style={{marginTop:14,padding:"12px 16px",background:"rgba(77,158,255,.06)",border:"1px solid rgba(77,158,255,.15)",borderRadius:10,fontSize:12.5,color:"var(--muted)"}}>
-            {apiStatus==="ok"?"✅ Cotações em tempo real via B3 (15min delay).":"📅 Exibindo preços do último fechamento da B3."}
+          <div style={{marginTop:14,padding:"12px 16px",background:"rgba(77,158,255,.06)",
+            border:"1px solid rgba(77,158,255,.15)",borderRadius:10,fontSize:12.5,color:"var(--muted)"}}>
+            {apiStatus==="ok"
+              ?"✅ Cotações em tempo real via B3 (15min delay)."
+              :"📅 Exibindo preços do último fechamento da B3."}
           </div>
         </div>
       )}
