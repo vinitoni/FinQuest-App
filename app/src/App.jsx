@@ -394,6 +394,8 @@ function useMacro(){
 
 // ─── MAIN APP ────────────────────────────────────────────────────
 // ─── Supabase data loader ────────────────────────────────────────
+const LS_PORT = id => "fq_port_" + id;
+
 async function loadUserData(authUser) {
   const [profileRes, portfolioRes, tradesRes, progressRes] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", authUser.id).single(),
@@ -402,8 +404,21 @@ async function loadUserData(authUser) {
     supabase.from("progress").select("*").eq("user_id", authUser.id),
   ]);
   const profile = profileRes.data || { id: authUser.id, name: "Investidor", xp: 0, cash: 100000 };
+
   const portfolioObj = {};
-  (portfolioRes.data || []).forEach(r => { portfolioObj[r.ticker] = { qty: r.qty, avgPrice: r.avg_price }; });
+  const portRows = portfolioRes.data || [];
+  if (portRows.length > 0) {
+    portRows.forEach(r => { portfolioObj[r.ticker] = { qty: r.qty, avgPrice: r.avg_price }; });
+    // Sync cloud data into localStorage so we have a local backup
+    try { localStorage.setItem(LS_PORT(authUser.id), JSON.stringify(portfolioObj)); } catch {}
+  } else {
+    // Supabase returned empty — fall back to localStorage cache
+    try {
+      const local = JSON.parse(localStorage.getItem(LS_PORT(authUser.id)) || "{}");
+      Object.assign(portfolioObj, local);
+    } catch {}
+  }
+
   const tradesArr = (tradesRes.data || []).map(r => ({
     type: r.type, ticker: r.ticker, qty: r.qty, price: r.price,
     profit: r.profit, date: new Date(r.created_at).toLocaleString("pt-BR"),
@@ -436,7 +451,8 @@ export default function FinQuest(){
   const earnXp=pts=>setXp(p=>p+pts);
 
   const totalPort=Object.entries(portfolio).reduce((s,[t,p])=>{
-    const st=stocks.find(s=>s.ticker===t);return s+(st?st.price*p.qty:0);
+    const st=stocks.find(s=>s.ticker===t);
+    return s+(st?st.price:p.avgPrice)*p.qty;
   },0);
   const totalWealth=cash+totalPort;
   const pnl=totalWealth-100000;
@@ -484,13 +500,15 @@ export default function FinQuest(){
     const newPortValue=Object.entries({...portfolio,[ticker]:newPos}).reduce((s,[t,p])=>{
       const st=stocks.find(st=>st.ticker===t);return s+(st?st.price*p.qty:0);},0);
     const newTotalWealth=newCash+newPortValue;
+    const newPortfolioState={...portfolio,[ticker]:newPos};
     setCash(newCash);
-    setPortfolio(p=>({...p,[ticker]:newPos}));
+    setPortfolio(()=>newPortfolioState);
     setTrades(t=>[{type:"buy",ticker,qty,price:s.price,date:new Date().toLocaleString("pt-BR")},...t]);
+    try { localStorage.setItem(LS_PORT(user?.id||"anon"),JSON.stringify(newPortfolioState)); } catch {}
     if(user){
       supabase.from("portfolio").upsert({user_id:user.id,ticker,qty:newPos.qty,avg_price:newPos.avgPrice},{onConflict:"user_id,ticker"}).then(()=>{});
       supabase.from("trades").insert({user_id:user.id,ticker,qty,price:s.price,type:"buy",profit:null}).then(()=>{});
-      supabase.from("profiles").update({cash:newCash,xp:newXp,total_wealth:newTotalWealth}).eq("id",user.id).then(()=>{});
+      supabase.from("profiles").update({cash:newCash,xp:newXp}).eq("id",user.id).then(()=>{});
     }
     earnXp(50);showToast(qty+"x "+ticker+" comprada!");
   }
@@ -510,13 +528,23 @@ export default function FinQuest(){
     setCash(newCash);
     setPortfolio(()=>newPortfolio);
     setTrades(t=>[{type:"sell",ticker,qty,price:s.price,profit,date:new Date().toLocaleString("pt-BR")},...t]);
+    try { localStorage.setItem(LS_PORT(user?.id||"anon"),JSON.stringify(newPortfolio)); } catch {}
     if(user){
       if(nq===0) supabase.from("portfolio").delete().eq("user_id",user.id).eq("ticker",ticker).then(()=>{});
       else supabase.from("portfolio").upsert({user_id:user.id,ticker,qty:nq,avg_price:pos.avgPrice},{onConflict:"user_id,ticker"}).then(()=>{});
       supabase.from("trades").insert({user_id:user.id,ticker,qty,price:s.price,type:"sell",profit}).then(()=>{});
-      supabase.from("profiles").update({cash:newCash,xp:newXp,total_wealth:newTotalWealth}).eq("id",user.id).then(()=>{});
+      supabase.from("profiles").update({cash:newCash,xp:newXp}).eq("id",user.id).then(()=>{});
     }
     earnXp(30);showToast("Venda: "+(profit>=0?"lucro":"prejuízo")+" de "+fmt(Math.abs(profit)));
+  }
+
+  async function updateProfile(updates){
+    if(!user) return;
+    setUser(u=>({...u,...updates}));
+    try {
+      await supabase.from("profiles").update(updates).eq("id",user.id);
+      showToast("Perfil atualizado!");
+    } catch { showToast("Erro ao salvar."); }
   }
 
   function markEvent(ev){
@@ -536,7 +564,7 @@ export default function FinQuest(){
 
   const sharedProps={user,courses,events,stocks,portfolio,cash,trades,xp,xpPct,level,LVL_NAMES,
     totalWealth,pnl,progress,lastUpdated,mktLoading,apiStatus,fetchPrices,macro,
-    buyStock,sellStock,markEvent,completeModule,earnXp,showToast};
+    buyStock,sellStock,markEvent,completeModule,earnXp,showToast,updateProfile};
 
   if(authLoading) return <><style>{css}</style><div className="mesh"/><div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",flexDirection:"column",gap:12}}><div className="logomark" style={{width:48,height:48,fontSize:18}}>FQ</div><div style={{color:"var(--muted)",fontSize:13}}>Carregando...</div></div></>;
 
@@ -1013,7 +1041,8 @@ function SimPage({stocks,portfolio,cash,buyStock,sellStock,lastUpdated,mktLoadin
   };
 
   const totalPort=Object.entries(portfolio).reduce((s,[t,p])=>{
-    const st=stocks.find(s=>s.ticker===t);return s+(st?st.price*p.qty:0);
+    const st=stocks.find(s=>s.ticker===t);
+    return s+(st?st.price:p.avgPrice)*p.qty;
   },0);
 
   return(
@@ -1989,16 +2018,44 @@ Regras:
 }
 
 // ─── PROFILE ──────────────────────────────────────────────────────
-function ProfilePage({user,xp,xpPct,level,LVL_NAMES,totalWealth,pnl,courses,progress,trades,onLogout}){
+function ProfilePage({user,xp,xpPct,level,LVL_NAMES,totalWealth,pnl,courses,progress,trades,onLogout,updateProfile}){
   const doneMod=Object.values(progress).reduce((s,set)=>s+set.size,0);
+  const[editing,setEditing]=useState(false);
+  const[nameVal,setNameVal]=useState(user?.name||"");
+
+  function saveProfile(){
+    const n=nameVal.trim();
+    if(!n) return;
+    updateProfile({name:n});
+    setEditing(false);
+  }
+
   return(
     <div className="page">
       <div className="topbar"><div className="ptitle syne">Meu Perfil</div></div>
       <div className="g2" style={{marginBottom:18}}>
         <div className="card" style={{display:"flex",gap:16,alignItems:"center"}}>
           <div className="avatar" style={{width:64,height:64,fontSize:20}}>{user?.name?.slice(0,2).toUpperCase()}</div>
-          <div>
-            <div className="syne" style={{fontSize:22,fontWeight:800,marginBottom:3}}>{user?.name}</div>
+          <div style={{flex:1,minWidth:0}}>
+            {editing?(
+              <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:8}}>
+                <input
+                  className="inp"
+                  value={nameVal}
+                  onChange={e=>setNameVal(e.target.value)}
+                  onKeyDown={e=>{if(e.key==="Enter")saveProfile();if(e.key==="Escape")setEditing(false);}}
+                  style={{flex:1,fontSize:16,fontWeight:700}}
+                  autoFocus
+                />
+                <button className="btn bprimary" style={{padding:"6px 14px",fontSize:13}} onClick={saveProfile}>Salvar</button>
+                <button className="btn boutline" style={{padding:"6px 10px",fontSize:13}} onClick={()=>{setEditing(false);setNameVal(user?.name||"");}}>✕</button>
+              </div>
+            ):(
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
+                <div className="syne" style={{fontSize:22,fontWeight:800}}>{user?.name}</div>
+                <button className="btn boutline" style={{padding:"3px 10px",fontSize:11,opacity:0.7}} onClick={()=>{setNameVal(user?.name||"");setEditing(true);}}>Editar</button>
+              </div>
+            )}
             <div style={{fontSize:13,color:"var(--muted)",marginBottom:8}}>{user?.email}</div>
             <div className="lvlbadge">⭐ Nível {level} — {LVL_NAMES[level]}</div>
           </div>
