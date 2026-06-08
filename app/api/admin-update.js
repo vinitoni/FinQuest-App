@@ -41,8 +41,17 @@ export default async function handler(req, res) {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
+  // Atualiza tabela profiles
   const { error } = await adminClient.from("profiles").update(safe).eq("id", userId);
   if (error) return res.status(500).json({ error: error.message });
+
+  // Se o nome foi alterado, sincroniza também em auth.users (raw_user_meta_data)
+  // É o que aparece como "Display name" no painel do Supabase Auth
+  if (safe.name) {
+    await adminClient.auth.admin.updateUserById(userId, {
+      user_metadata: { name: safe.name },
+    });
+  }
 
   return res.status(200).json({ ok: true });
 }
