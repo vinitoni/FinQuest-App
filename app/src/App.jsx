@@ -1,14 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { AreaChart, Area, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "./supabase";
 import ForgotPassword from "./ForgotPassword";
 import ResetPassword from "./ResetPassword";
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
 
 // ─── helpers ────────────────────────────────────────────────────
 const fmt  = v => v == null ? "R$0,00" : v.toLocaleString("pt-BR",{style:"currency",currency:"BRL",minimumFractionDigits:2});
