@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { AreaChart, Area, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { createClient } from "@supabase/supabase-js";
+import ForgotPassword from "./ForgotPassword";
+import ResetPassword from "./ResetPassword";
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
@@ -672,6 +674,8 @@ export default function FinQuest(){
         <Route path="/"        element={<Landing onLogin={()=>navigate("/login")} onSignup={()=>navigate("/signup")} stocks={stocks}/>}/>
         <Route path="/login"   element={<AuthScreen mode="login"  onSuccess={handleAuthSuccess} onSwitch={()=>navigate("/signup")} onBack={()=>navigate("/")}/>}/>
         <Route path="/signup"  element={<AuthScreen mode="signup" onSuccess={handleAuthSuccess} onSwitch={()=>navigate("/login")}  onBack={()=>navigate("/")}/>}/>
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/admin"   element={<AdminLogin onSuccess={()=>navigate("/admin/panel")} onBack={()=>navigate("/")}/>}/>
         <Route path="/admin/panel" element={<AdminPanel courses={courses} setCourses={setCourses} events={events} setEvents={setEvents} onExit={()=>navigate("/")}/>}/>
         <Route path="/*"       element={user ? appShell : <Navigate to="/" replace/>}/>
@@ -834,6 +838,7 @@ function AuthScreen({mode,onSuccess,onSwitch,onBack}){
   const[loading,setLoading]=useState(false);
   const[serverErr,setServerErr]=useState("");
   const isSignup=mode==="signup";
+  const navigate = useNavigate();
 
   function validate(){
     const e={};
@@ -889,6 +894,28 @@ function AuthScreen({mode,onSuccess,onSwitch,onBack}){
           <label className="ilabel">Senha</label>
           <input className="inp" type="password" value={form.password} onChange={e=>setForm(p=>({...p,password:e.target.value}))} placeholder="Mín. 6 caracteres" onKeyDown={e=>e.key==="Enter"&&submit()} style={{borderColor:errors.password?"var(--red)":""}}/>
           {errors.password&&<div style={{color:"var(--red)",fontSize:12,marginTop:4}}>{errors.password}</div>}
+          {!isSignup && (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                marginTop: -4,
+                marginBottom: 16
+              }}
+            >
+              <span
+                onClick={() => navigate("/forgot-password")}
+                style={{
+                  color: "var(--g)",
+                  cursor: "pointer",
+                  fontSize: 13,
+                  fontWeight: 600
+                }}
+              >
+                Esqueceu sua senha?
+              </span>
+            </div>
+          )}
         </div>
         {serverErr&&<div style={{color:"var(--red)",fontSize:12,marginBottom:8,padding:"8px 12px",background:"rgba(255,82,82,.1)",borderRadius:7}}>{serverErr}</div>}
         <button className="btn bprimary" style={{width:"100%",marginTop:6,opacity:loading?0.7:1}} onClick={submit} disabled={loading}>{loading?"Aguarde...":(isSignup?"Criar conta":"Entrar")}</button>
