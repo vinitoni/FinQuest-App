@@ -517,7 +517,12 @@ export default function FinQuest(){
   const{macro}=useMacro();
 
   const showToast=msg=>setToast(msg);
-  const earnXp=pts=>setXp(p=>p+pts);
+  // earnXp persiste o XP no Supabase — antes, XP de duelo/eventos era só local e sumia ao recarregar
+  const earnXp=pts=>setXp(p=>{
+    const nx=p+pts;
+    if(user) supabase.from("profiles").update({xp:nx}).eq("id",user.id).then(()=>{});
+    return nx;
+  });
 
   const totalPort=Object.entries(portfolio).reduce((s,[t,p])=>{
     const st=stocks.find(s=>s.ticker===t);
@@ -528,6 +533,14 @@ export default function FinQuest(){
   const level=xp<500?1:xp<1500?2:xp<3000?3:xp<5000?4:5;
   const LVL_NAMES=["","Iniciante","Investidor","Estrategista","Trader","Mestre"];
   const xpPct=Math.min(100,(xp/[500,1500,3000,5000,9999][level-1])*100);
+
+  // Mantém o patrimônio total do ranking atualizado conforme os preços se movem
+  // (sem precisar de trade). Dispara a cada refresh de cotações.
+  useEffect(()=>{
+    if(!user || Object.keys(portfolio).length===0) return;
+    supabase.from("profiles").update({total_wealth:totalWealth}).eq("id",user.id).then(()=>{});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[lastUpdated]);
 
   // secret admin - no visible button anywhere
   useSecretAdmin(useCallback(()=>navigate("/admin"),[navigate]) );
@@ -585,7 +598,7 @@ export default function FinQuest(){
     if(user){
       supabase.from("portfolio").upsert({user_id:user.id,ticker,qty:newPos.qty,avg_price:newPos.avgPrice},{onConflict:"user_id,ticker"}).then(()=>{});
       supabase.from("trades").insert({user_id:user.id,ticker,qty,price:s.price,type:"buy",profit:null}).then(()=>{});
-      supabase.from("profiles").update({cash:newCash,xp:newXp}).eq("id",user.id).then(()=>{});
+      supabase.from("profiles").update({cash:newCash,xp:newXp,total_wealth:newTotalWealth}).eq("id",user.id).then(()=>{});
     }
     earnXp(50);showToast(qty+"x "+ticker+" comprada!");
   }
@@ -610,7 +623,7 @@ export default function FinQuest(){
       if(nq===0) supabase.from("portfolio").delete().eq("user_id",user.id).eq("ticker",ticker).then(()=>{});
       else supabase.from("portfolio").upsert({user_id:user.id,ticker,qty:nq,avg_price:pos.avgPrice},{onConflict:"user_id,ticker"}).then(()=>{});
       supabase.from("trades").insert({user_id:user.id,ticker,qty,price:s.price,type:"sell",profit}).then(()=>{});
-      supabase.from("profiles").update({cash:newCash,xp:newXp}).eq("id",user.id).then(()=>{});
+      supabase.from("profiles").update({cash:newCash,xp:newXp,total_wealth:newTotalWealth}).eq("id",user.id).then(()=>{});
     }
     earnXp(30);showToast("Venda: "+(profit>=0?"lucro":"prejuízo")+" de "+fmt(Math.abs(profit)));
   }
@@ -894,7 +907,7 @@ function AuthScreen({mode,onSuccess,onSwitch,onBack}){
               style={{
                 display: "flex",
                 justifyContent: "flex-end",
-                marginTop: -4,
+                marginTop: -2,
                 marginBottom: 16
               }}
             >
@@ -1831,8 +1844,16 @@ function DuelPage({user,totalWealth,earnXp,showToast}){
   const chartData=hist.map(r=>({r:"R"+r.r,Você:r.myVal,Oponente:r.oppVal}));
   const won=myVal>oppVal;
 
+  // Premia o XP UMA vez quando o duelo termina em vitória — antes era chamado
+  // durante o render, premiando a cada re-render e nunca de forma confiável.
+  const awarded=useRef(false);
+  useEffect(()=>{
+    if(phase==="result" && won && !awarded.current){ awarded.current=true; earnXp(500); showToast("+500 XP pela vitória!"); }
+    if(phase!=="result") awarded.current=false;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[phase]);
+
   if(phase==="result"){
-    if(won) earnXp(500);
     return(
       <div className="page">
         <div style={{textAlign:"center",padding:"20px 0 36px"}}>

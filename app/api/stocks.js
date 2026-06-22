@@ -1,87 +1,60 @@
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
-// In-memory crumb cache — persists while the serverless instance is warm
-let _cache = { crumb: null, cookie: null, exp: 0 };
+// Hosts do Yahoo — tenta query1 e, se falhar, query2
+const HOSTS = ["https://query1.finance.yahoo.com", "https://query2.finance.yahoo.com"];
 
-async function getCrumb() {
-  if (_cache.crumb && Date.now() < _cache.exp) return _cache;
+// Busca a cotação de UM ativo via endpoint /chart — não exige crumb nem cookie,
+// ao contrário do antigo /quote (que passou a retornar "Invalid Cookie" / HTTP 500).
+async function fetchOne(symbol) {
+  const path = `/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
+  let lastErr;
+  for (const host of HOSTS) {
+    try {
+      const r = await fetch(host + path, {
+        headers: { "User-Agent": UA, Accept: "application/json" },
+        signal: AbortSignal.timeout(8000),
+      });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const data = await r.json();
+      const meta = data?.chart?.result?.[0]?.meta;
+      if (!meta || meta.regularMarketPrice == null) throw new Error("sem preço");
 
-  // Step 1: visit Yahoo Finance to receive session cookies
-  const r1 = await fetch("https://finance.yahoo.com", {
-    headers: { "User-Agent": UA, Accept: "text/html,application/xhtml+xml,*/*" },
-    signal: AbortSignal.timeout(8000),
-  });
+      const price = meta.regularMarketPrice;
+      const prev = meta.chartPreviousClose ?? meta.previousClose ?? null;
+      const changePct = prev ? ((price - prev) / prev) * 100 : null;
 
-  // Extract cookies — Node 18+ supports getSetCookie()
-  let cookie = "";
-  try {
-    const cookies = r1.headers.getSetCookie();
-    cookie = cookies.map(c => c.split(";")[0]).join("; ");
-  } catch {
-    cookie = (r1.headers.get("set-cookie") || "").split(";")[0];
+      return {
+        symbol: symbol.replace(".SA", ""),
+        regularMarketPrice: price,
+        regularMarketChangePercent: changePct,
+        regularMarketDayHigh: meta.regularMarketDayHigh ?? null,
+        regularMarketDayLow: meta.regularMarketDayLow ?? null,
+        regularMarketVolume: meta.regularMarketVolume ?? null,
+      };
+    } catch (e) {
+      lastErr = e;
+    }
   }
-
-  // Step 2: exchange cookies for a crumb token
-  const r2 = await fetch("https://query2.finance.yahoo.com/v1/test/getcrumb", {
-    headers: {
-      "User-Agent": UA,
-      Cookie: cookie,
-      Referer: "https://finance.yahoo.com",
-    },
-    signal: AbortSignal.timeout(6000),
-  });
-  if (!r2.ok) throw new Error(`crumb HTTP ${r2.status}`);
-
-  const crumb = (await r2.text()).trim();
-  if (!crumb || crumb.startsWith("<")) throw new Error("crumb inválido");
-
-  _cache = { crumb, cookie, exp: Date.now() + 20 * 60 * 1000 };
-  return _cache;
+  throw lastErr || new Error("falha");
 }
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
+  // cache de borda: 1 min fresco + serve stale por 2 min enquanto revalida
+  res.setHeader("Cache-Control", "s-maxage=60, stale-while-revalidate=120");
   if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
 
   const symbols = req.query.symbols || "PETR4,VALE3,ITUB4,MGLU3";
-  const yahooSymbols = symbols.split(",").map(s => `${s.trim()}.SA`).join(",");
+  const list = symbols.split(",").map(s => `${s.trim()}.SA`);
 
-  try {
-    const { crumb, cookie } = await getCrumb();
+  const settled = await Promise.allSettled(list.map(fetchOne));
+  const results = settled.filter(s => s.status === "fulfilled").map(s => s.value);
 
-    const url =
-      `https://query2.finance.yahoo.com/v8/finance/quote` +
-      `?symbols=${yahooSymbols}` +
-      `&crumb=${encodeURIComponent(crumb)}` +
-      `&fields=regularMarketPrice,regularMarketChangePercent,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume` +
-      `&region=BR&lang=pt-BR`;
-
-    const r = await fetch(url, {
-      headers: {
-        "User-Agent": UA,
-        Cookie: cookie,
-        Referer: "https://finance.yahoo.com",
-        Accept: "application/json",
-      },
-      signal: AbortSignal.timeout(10000),
-    });
-
-    if (!r.ok) throw new Error(`quote HTTP ${r.status}`);
-    const data = await r.json();
-    const results = data?.quoteResponse?.result || [];
-    if (!results.length) throw new Error("resposta vazia");
-
-    const normalized = results.map(q => ({
-      symbol: q.symbol.replace(".SA", ""),
-      regularMarketPrice: q.regularMarketPrice ?? null,
-      regularMarketChangePercent: q.regularMarketChangePercent ?? null,
-      regularMarketDayHigh: q.regularMarketDayHigh ?? null,
-      regularMarketDayLow: q.regularMarketDayLow ?? null,
-      regularMarketVolume: q.regularMarketVolume ?? null,
-    }));
-
-    return res.status(200).json({ results: normalized });
-  } catch (err) {
-    return res.status(503).json({ error: err.message });
+  if (!results.length) {
+    const firstErr = settled.find(s => s.status === "rejected");
+    return res.status(503).json({ error: firstErr?.reason?.message || "todas as cotações falharam" });
   }
+
+  // Retorna o que conseguiu (parcial é melhor que nada — o front mantém fallback nos faltantes)
+  return res.status(200).json({ results });
 }
