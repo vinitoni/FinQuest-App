@@ -1810,8 +1810,8 @@ function NewsPage({stocks,apiStatus}){
   );
 }
 
-// ─── DUEL MODE ────────────────────────────────────────────────────
-function DuelPage({user,totalWealth,earnXp,showToast}){
+// ─── DUEL MODE (variação real da B3) ──────────────────────────────
+function DuelPage({user,totalWealth,earnXp,showToast,stocks}){
   const[phase,setPhase]=useState("lobby");
   const[opp,setOpp]=useState(null);
   const[myVal,setMyVal]=useState(totalWealth);
@@ -1819,21 +1819,40 @@ function DuelPage({user,totalWealth,earnXp,showToast}){
   const[round,setRound]=useState(0);
   const[hist,setHist]=useState([]);
   const[animating,setAnimating]=useState(false);
+  const[rounds,setRounds]=useState([]); // ações sorteadas para cada rodada
   const ROUNDS=5;
 
-  function startDuel(o){setOpp(o);setMyVal(totalWealth);setOppVal(100000);setRound(0);setHist([]);setPhase("duel");}
+  function startDuel(o){
+    // sorteia ROUNDS ações distintas da B3 para as rodadas
+    const pool=[...stocks].sort(()=>Math.random()-0.5).slice(0,ROUNDS);
+    setRounds(pool);
+    setOpp(o);setMyVal(totalWealth);setOppVal(100000);setRound(0);setHist([]);setPhase("duel");
+  }
+
+  const curStock=rounds[round]||null;
 
   function playRound(choice){
-    if(animating) return;
+    if(animating||!curStock) return;
     setAnimating(true);
     setTimeout(()=>{
+      // variação REAL do pregão (em %) — fonte: /api/stocks (Yahoo) ou último fechamento
+      const chg=Number(curStock.change)||0;
+      // Você: Alta = comprado (long), Baixa = vendido (short), Neutro = fora (caixa)
       const myMult=choice==="bull"?1:choice==="bear"?-1:0;
-      const myΔ=myMult*(Math.random()*.07+.01);
-      const oppΔ=(Math.random()>.45?1:-1)*(Math.random()*.06+.01);
+      const myΔ=myMult*chg/100;
+      // Bot: chance de acertar o lado = taxa de vitória do oponente (dificuldade)
+      const skill=opp.wins/(opp.wins+opp.losses);
+      const correct=chg>0?"bull":chg<0?"bear":"neutral";
+      let botChoice;
+      if(chg===0) botChoice="neutral";
+      else botChoice=Math.random()<skill?correct:(correct==="bull"?"bear":"bull");
+      const botMult=botChoice==="bull"?1:botChoice==="bear"?-1:0;
+      const oppΔ=botMult*chg/100;
+
       const nMy=+(myVal*(1+myΔ)).toFixed(2);
       const nOpp=+(oppVal*(1+oppΔ)).toFixed(2);
       setMyVal(nMy);setOppVal(nOpp);
-      const entry={r:round+1,choice,myΔ,oppΔ,myVal:nMy,oppVal:nOpp};
+      const entry={r:round+1,ticker:curStock.ticker,chg,choice,botChoice,myΔ,oppΔ,myVal:nMy,oppVal:nOpp};
       setHist(h=>[...h,entry]);
       setRound(r=>r+1);
       setAnimating(false);
@@ -1918,13 +1937,16 @@ function DuelPage({user,totalWealth,earnXp,showToast}){
           </div>
         ):(
           <>
-            <div className="syne" style={{fontSize:17,fontWeight:700,marginBottom:5}}>Sua aposta para rodada {round+1}</div>
-            <div style={{fontSize:13,color:"var(--muted)",marginBottom:18}}>O que você acredita que vai acontecer com o mercado?</div>
+            <div style={{fontSize:12,color:"var(--muted)",marginBottom:4,textTransform:"uppercase",letterSpacing:.5}}>Ação da rodada</div>
+            <div className="syne" style={{fontSize:24,fontWeight:800,marginBottom:2}}>{curStock?.ticker}</div>
+            <div style={{fontSize:13,color:"var(--muted)",marginBottom:16}}>{curStock?.name} · {curStock?.sector}</div>
+            <div style={{fontSize:14,fontWeight:600,marginBottom:14}}>Como você acha que <strong>{curStock?.ticker}</strong> fechou hoje na B3?</div>
             <div style={{display:"flex",gap:11,justifyContent:"center"}}>
-              <button className="btn bprimary" style={{fontSize:15,padding:"12px 26px"}} onClick={()=>playRound("bull")}>📈 Alta</button>
-              <button className="btn boutline" style={{fontSize:15,padding:"12px 26px"}} onClick={()=>playRound("neutral")}>➡️ Neutro</button>
-              <button className="btn bred" style={{fontSize:15,padding:"12px 26px"}} onClick={()=>playRound("bear")}>📉 Baixa</button>
+              <button className="btn bprimary" style={{fontSize:15,padding:"12px 26px"}} onClick={()=>playRound("bull")} title="Comprado (long)">📈 Alta</button>
+              <button className="btn boutline" style={{fontSize:15,padding:"12px 26px"}} onClick={()=>playRound("neutral")} title="Fora do mercado">➡️ Neutro</button>
+              <button className="btn bred" style={{fontSize:15,padding:"12px 26px"}} onClick={()=>playRound("bear")} title="Vendido (short)">📉 Baixa</button>
             </div>
+            <div style={{fontSize:11,color:"var(--muted)",marginTop:12}}>Alta = comprado · Baixa = vendido · Neutro = fica em caixa</div>
           </>
         )}
       </div>
@@ -1933,9 +1955,9 @@ function DuelPage({user,totalWealth,earnXp,showToast}){
         <div className="card">
           <div className="clabel" style={{marginBottom:11}}>Histórico</div>
           {hist.slice().reverse().map(r=>(
-            <div key={r.r} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 11px",background:"var(--bg2)",borderRadius:7,marginBottom:6,fontSize:13}}>
-              <span style={{color:"var(--muted)"}}>R{r.r}</span>
-              <span>Aposta: <strong>{r.choice==="bull"?"📈 Alta":r.choice==="bear"?"📉 Baixa":"➡️ Neutro"}</strong></span>
+            <div key={r.r} style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,padding:"8px 11px",background:"var(--bg2)",borderRadius:7,marginBottom:6,fontSize:13}}>
+              <span style={{color:"var(--muted)",minWidth:64}}><strong style={{color:"var(--text)"}}>{r.ticker}</strong> {fmtP(r.chg)}</span>
+              <span>{r.choice==="bull"?"📈":r.choice==="bear"?"📉":"➡️"}</span>
               <span style={{color:r.myΔ>=0?"var(--g)":"var(--red)"}}>{fmtP(r.myΔ*100)}</span>
               <span style={{color:r.oppΔ>=0?"var(--blue)":"var(--red)"}}>{opp.name.split(" ")[0]}: {fmtP(r.oppΔ*100)}</span>
             </div>
@@ -1951,7 +1973,7 @@ function DuelPage({user,totalWealth,earnXp,showToast}){
       <div className="topbar"><div><div className="ptitle syne">⚔️ Duelo de Carteiras</div><div className="psub">Compita em {ROUNDS} rodadas — quem ganhar mais vence!</div></div></div>
       <div style={{padding:"14px 18px",background:"rgba(245,200,66,.06)",border:"1px solid rgba(245,200,66,.2)",borderRadius:10,marginBottom:26,fontSize:13,color:"var(--muted)"}}>
         <strong style={{color:"var(--gold)"}}>Como funciona: </strong>
-        Em cada rodada, você aposta em <strong style={{color:"var(--g)"}}>Alta</strong>, <strong style={{color:"var(--red)"}}>Baixa</strong> ou <strong>Neutro</strong>. Sua carteira cresce ou encolhe conforme o resultado. Quem terminar com mais patrimônio ganha <strong style={{color:"var(--gold)"}}>+500 XP</strong>!
+        Cada rodada sorteia uma <strong>ação real da B3</strong>. Você prevê se ela subiu (<strong style={{color:"var(--g)"}}>Alta</strong> = comprado), caiu (<strong style={{color:"var(--red)"}}>Baixa</strong> = vendido) ou fica de <strong>fora</strong>. O resultado usa a <strong>variação real do pregão</strong> — acertar a direção faz sua carteira render. Quem terminar com mais patrimônio ganha <strong style={{color:"var(--gold)"}}>+500 XP</strong>!
       </div>
       <div className="g2">
         {OPPONENTS.map(o=>(
