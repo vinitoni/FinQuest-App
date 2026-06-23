@@ -25,8 +25,8 @@ const STOCK_META = {
   BBAS3:{name:"Banco do Brasil",sector:"Bancos"}, ABEV3:{name:"Ambev",          sector:"Consumo"},
   SUZB3:{name:"Suzano",     sector:"Papel"},      JBSS3:{name:"JBS",            sector:"Alimentos"},
 };
-// Preços do último fechamento B3, fallback quando Brapi.dev indisponível
-// Atualizado em: 06/03/2026. Brapi.dev substitui estes valores automaticamente.
+// Preços do último fechamento B3, fallback quando o Yahoo Finance está indisponível
+// Atualizado em: 06/03/2026. O Yahoo Finance substitui estes valores automaticamente.
 const FALLBACK = {
   PETR4: 40.64, // Petrobras, fechamento 05/03 (Investing.com)
   VALE3: 81.29, // Vale, fechamento 05/03 (Investing.com, confirmado)
@@ -423,7 +423,7 @@ function useMarket(){
       setApiStatus("ok");
     } catch(e){
       clearTimeout(timer);
-      console.warn("Brapi.dev falhou:", e.message, "usando último fechamento B3");
+      console.warn("Cotações falharam:", e.message, "usando último fechamento B3");
       setApiStatus("fallback");
     } finally{
       setLoading(false);
@@ -809,7 +809,7 @@ function Landing({onLogin,onSignup,stocks}){
         <div style={{maxWidth:1160,margin:"0 auto",padding:"70px 40px"}}>
           <div className="syne" style={{fontSize:"clamp(24px,4vw,42px)",fontWeight:800,letterSpacing:"-.02em",marginBottom:42}}>O que torna o FinQuest diferente</div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:14}}>
-            {[["📡","Preços reais","Cotações B3 via Brapi.dev com ~15min delay"],
+            {[["📡","Preços reais","Cotações B3 via Yahoo Finance com ~15min delay"],
               ["🤖","IA Tutora","Tire dúvidas com Claude AI especializado em investimentos"],
               ["⚔️","Modo Duelo","Compita com outros investidores em tempo real"],
               ["📊","Benchmarks","Compare sua carteira com CDI e Ibovespa"],
@@ -1148,6 +1148,44 @@ function useMemo(fn,deps){
 }
 
 // ─── SIMULATOR ────────────────────────────────────────────────────
+// Linha da carteira com venda parcial (estilo corretora)
+function PositionRow({ticker,pos,stock,sellStock,setInfo}){
+  const[q,setQ]=useState(1);
+  const max=pos.qty;
+  const cur=stock?stock.price:pos.avgPrice;
+  const ret=stock?(stock.price-pos.avgPrice)/pos.avgPrice*100:0;
+  const sellQ=Math.min(Math.max(1,q),max);
+  const setPct=p=>setQ(Math.max(1,Math.floor(max*p)));
+  return(
+    <div className="card" style={{padding:"16px 20px"}}>
+      <div style={{display:"grid",gridTemplateColumns:"1.3fr .7fr 1fr 1.2fr",alignItems:"center",gap:10}}>
+        <div><div className="syne" style={{fontWeight:700,color:"var(--g)"}}>{ticker}</div><div style={{fontSize:11,color:"var(--muted)"}}>{stock?.name}</div></div>
+        <div><div style={{fontSize:10,color:"var(--muted)"}}>Qtd</div><div style={{fontWeight:600}}>{pos.qty}</div></div>
+        <div>
+          <div style={{fontSize:10,color:"var(--muted)",display:"flex",gap:4,alignItems:"center"}}>PM <button onClick={()=>setInfo("pm")} style={{background:"rgba(77,158,255,.15)",border:"none",color:"var(--blue)",fontSize:9,fontWeight:700,cursor:"pointer",borderRadius:99,padding:"1px 5px"}}>i</button></div>
+          <div style={{fontWeight:600}}>{fmt(pos.avgPrice)}</div>
+        </div>
+        <div>
+          <div style={{fontSize:10,color:"var(--muted)"}}>Resultado</div>
+          <div style={{fontWeight:700,color:ret>=0?"var(--g)":"var(--red)"}}>{fmtP(ret)}</div>
+          <div style={{fontSize:11,color:"var(--muted)"}}>{stock?fmt(cur*pos.qty):"-"}</div>
+        </div>
+      </div>
+      <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap",marginTop:13,paddingTop:13,borderTop:"1px solid var(--b)"}}>
+        <span style={{fontSize:12,color:"var(--muted)"}}>Vender</span>
+        <input className="inp" type="number" min={1} max={max} value={q} onChange={e=>setQ(Math.min(max,Math.max(1,parseInt(e.target.value)||1)))} style={{width:78,padding:"6px 9px"}}/>
+        <div style={{display:"flex",gap:5}}>
+          <button className="btn bghost bxs" onClick={()=>setPct(.25)}>25%</button>
+          <button className="btn bghost bxs" onClick={()=>setPct(.5)}>50%</button>
+          <button className="btn bghost bxs" onClick={()=>setQ(max)}>Tudo</button>
+        </div>
+        <span style={{fontSize:12,color:"var(--muted)",marginLeft:"auto"}}>≈ {fmt(cur*sellQ)}</span>
+        <button className="btn bred bsm" onClick={()=>sellStock(ticker,sellQ)}>Vender {sellQ===max?"tudo":sellQ}</button>
+      </div>
+    </div>
+  );
+}
+
 function SimPage({stocks,portfolio,cash,buyStock,sellStock,lastUpdated,mktLoading,apiStatus,fetchPrices}){
   const[sel,setSel]=useState(null);
   const[qty,setQty]=useState(1);
@@ -1155,9 +1193,21 @@ function SimPage({stocks,portfolio,cash,buyStock,sellStock,lastUpdated,mktLoadin
   const[info,setInfo]=useState(null);
 
   const INFO={
-    price:{t:"Como funcionam os preços?",b:"Cotações reais da B3 via <strong>Brapi.dev</strong> com ~15min de delay. Atualização automática a cada 5 minutos. Quando indisponível, exibimos o último fechamento conhecido."},
+    price:{t:"Como funcionam os preços?",b:"Cotações reais da B3 via <strong>Yahoo Finance</strong> com ~15min de delay. Atualização automática a cada 5 minutos. Quando indisponível, exibimos o último fechamento conhecido."},
     change:{t:"O que é variação diária?",b:"Indica quanto o ativo subiu ou caiu vs. fechamento anterior. <strong>▲ verde = alta</strong>, <strong>▼ vermelho = queda</strong>. No mercado real, muda a cada segundo durante o pregão (10h–17h)."},
     pm:{t:"Preço Médio (PM)",b:"Média ponderada dos preços de compra. Exemplo: 10 ações a R$30 + 10 a R$40 = PM R$35.<br/><br/><strong>Resultado = (Preço atual − PM) × Quantidade</strong>"},
+    codigo:{t:"Entenda os códigos da bolsa",b:"Toda ação tem um código (o <strong>ticker</strong>), formado por <strong>4 letras + um número</strong>. Ex: <strong>PETR4</strong>, <strong>VALE3</strong>, <strong>BBAS3</strong>.<br/><br/>"+
+      "<strong>As letras</strong> identificam a empresa:<br/>• PETR = Petrobras · VALE = Vale · BBAS = Banco do Brasil · ITUB = Itaú<br/><br/>"+
+      "<strong>O número</strong> diz o tipo da ação:<br/>"+
+      "• <strong>3</strong> = Ordinária (ON), dá direito a voto nas assembleias<br/>"+
+      "• <strong>4</strong> = Preferencial (PN), sem voto, mas com prioridade nos dividendos<br/>"+
+      "• <strong>11</strong> = Unit, ETF ou Fundo Imobiliário (FII)<br/><br/>"+
+      "Por isso <strong>BBAS3</strong> (Banco do Brasil ON) é diferente de <strong>ITUB4</strong> (Itaú PN): muda a empresa e o tipo."},
+    frac:{t:"Lote padrão x Fracionário (o \"F\")",b:"Na B3 a mesma ação pode ser negociada de dois jeitos:<br/><br/>"+
+      "• <strong>Lote padrão</strong> (ex: <strong>BBAS3</strong>): compra/venda de <strong>100 em 100</strong> ações. É onde está a maior liquidez.<br/>"+
+      "• <strong>Fracionário</strong> (ex: <strong>BBAS3F</strong>, com o <strong>F</strong> no fim): permite comprar de <strong>1 a 99</strong> ações. Ideal pra quem está começando com pouco dinheiro.<br/><br/>"+
+      "É a <strong>mesma empresa e o mesmo preço por ação</strong>, só muda a quantidade mínima. O \"F\" indica o mercado fracionário.<br/><br/>"+
+      "Aqui no simulador você opera <strong>de 1 em 1</strong> (como no fracionário), pra você aprender sem precisar de lotes inteiros."},
   };
 
   const totalPort=Object.entries(portfolio).reduce((s,[t,p])=>{
@@ -1197,7 +1247,7 @@ function SimPage({stocks,portfolio,cash,buyStock,sellStock,lastUpdated,mktLoadin
         <span>ℹ️</span>
         <div style={{flex:1,color:"var(--muted)"}}>
           {apiStatus==="ok"
-            ?"✅ Cotações em tempo real via Brapi.dev (B3 com ~15min delay). Auto-atualização a cada 5 min."
+            ?"✅ Cotações em tempo real via Yahoo Finance (B3 com ~15min delay). Auto-atualização a cada 5 min."
             :apiStatus==="fallback"
             ?"📅 Exibindo preços do último fechamento da B3. Atualizando cotações em tempo real..."
             :"⏳ Conectando ao serviço de cotações..."}
@@ -1210,6 +1260,14 @@ function SimPage({stocks,portfolio,cash,buyStock,sellStock,lastUpdated,mktLoadin
           <button key={k} className={`tab${tab===k?" act":""}`} onClick={()=>setTab(k)}>{l}</button>
         ))}
       </div>
+
+      {tab==="mkt"&&(
+        <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap",marginBottom:14,fontSize:13,color:"var(--muted)"}}>
+          <span>🎓 Novo na bolsa?</span>
+          <button className="btn bghost bxs" onClick={()=>setInfo("codigo")}>O que significa PETR4, BBAS3?</button>
+          <button className="btn bghost bxs" onClick={()=>setInfo("frac")}>Lote padrão x Fracionário (F)</button>
+        </div>
+      )}
 
       {tab==="mkt"&&(
         <div className="g2">
@@ -1306,26 +1364,9 @@ function SimPage({stocks,portfolio,cash,buyStock,sellStock,lastUpdated,mktLoadin
           </div>
         ):(
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
-            {Object.entries(portfolio).map(([t,pos])=>{
-              const s=stocks.find(s=>s.ticker===t);
-              const ret=s?(s.price-pos.avgPrice)/pos.avgPrice*100:0;
-              return(
-                <div key={t} className="card" style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 120px",alignItems:"center",padding:"16px 20px"}}>
-                  <div><div className="syne" style={{fontWeight:700,color:"var(--g)"}}>{t}</div><div style={{fontSize:11,color:"var(--muted)"}}>{s?.name}</div></div>
-                  <div><div style={{fontSize:10,color:"var(--muted)"}}>Qtd</div><div style={{fontWeight:600}}>{pos.qty}</div></div>
-                  <div>
-                    <div style={{fontSize:10,color:"var(--muted)",display:"flex",gap:4,alignItems:"center"}}>PM <button onClick={()=>setInfo("pm")} style={{background:"rgba(77,158,255,.15)",border:"none",color:"var(--blue)",fontSize:9,fontWeight:700,cursor:"pointer",borderRadius:99,padding:"1px 5px"}}>i</button></div>
-                    <div style={{fontWeight:600}}>{fmt(pos.avgPrice)}</div>
-                  </div>
-                  <div>
-                    <div style={{fontSize:10,color:"var(--muted)"}}>Resultado</div>
-                    <div style={{fontWeight:700,color:ret>=0?"var(--g)":"var(--red)"}}>{fmtP(ret)}</div>
-                    <div style={{fontSize:11,color:"var(--muted)"}}>{s?fmt(s.price*pos.qty):"-"}</div>
-                  </div>
-                  <button className="btn bred bsm" onClick={()=>sellStock(t,pos.qty)}>Vender tudo</button>
-                </div>
-              );
-            })}
+            {Object.entries(portfolio).map(([t,pos])=>(
+              <PositionRow key={t} ticker={t} pos={pos} stock={stocks.find(s=>s.ticker===t)} sellStock={sellStock} setInfo={setInfo}/>
+            ))}
           </div>
         )
       )}
