@@ -25,21 +25,21 @@ const STOCK_META = {
   BBAS3:{name:"Banco do Brasil",sector:"Bancos"}, ABEV3:{name:"Ambev",          sector:"Consumo"},
   SUZB3:{name:"Suzano",     sector:"Papel"},      JBSS3:{name:"JBS",            sector:"Alimentos"},
 };
-// Preços do último fechamento B3 — fallback quando Brapi.dev indisponível
+// Preços do último fechamento B3, fallback quando Brapi.dev indisponível
 // Atualizado em: 06/03/2026. Brapi.dev substitui estes valores automaticamente.
 const FALLBACK = {
-  PETR4: 40.64, // Petrobras — fechamento 05/03 (Investing.com)
-  VALE3: 81.29, // Vale      — fechamento 05/03 (Investing.com, confirmado)
-  ITUB4: 43.51, // Itaú      — fechamento 05/03 (Investing.com)
-  BBDC4: 20.49, // Bradesco  — fechamento 05/03 (Investing.com)
-  WEGE3: 46.71, // WEG       — fechamento 05/03 (Investing.com)
-  MGLU3:  9.64, // Magalu    — fechamento 05/03 (aprox. — hoje ~9,94)
-  BBAS3: 25.00, // BB        — fechamento 05/03 (Investing.com)
-  ABEV3: 15.10, // Ambev     — fechamento 05/03 (aprox. — hoje ~15,29)
-  SUZB3: 55.90, // Suzano    — fechamento 05/03 (aprox. — hoje ~56,50)
-  JBSS3: 39.03, // JBS       — fechamento 05/03 (Investidor10)
+  PETR4: 40.64, // Petrobras, fechamento 05/03 (Investing.com)
+  VALE3: 81.29, // Vale, fechamento 05/03 (Investing.com, confirmado)
+  ITUB4: 43.51, // Itaú, fechamento 05/03 (Investing.com)
+  BBDC4: 20.49, // Bradesco, fechamento 05/03 (Investing.com)
+  WEGE3: 46.71, // WEG, fechamento 05/03 (Investing.com)
+  MGLU3:  9.64, // Magalu, fechamento 05/03 (aprox., hoje ~9,94)
+  BBAS3: 25.00, // BB, fechamento 05/03 (Investing.com)
+  ABEV3: 15.10, // Ambev, fechamento 05/03 (aprox., hoje ~15,29)
+  SUZB3: 55.90, // Suzano, fechamento 05/03 (aprox., hoje ~56,50)
+  JBSS3: 39.03, // JBS, fechamento 05/03 (Investidor10)
 };
-// Variação do último pregão (05/03 vs 04/03) — fonte: Investing.com
+// Variação do último pregão (05/03 vs 04/03), fonte: Investing.com
 const FALLBACK_CHANGE = {
   PETR4: +0.35,  // +0,35% em 05/03
   VALE3: -3.33,  // -3,33% (de 84,09 para 81,29)
@@ -68,11 +68,11 @@ const COURSES = [
       {id:"b1",type:"text",content:"<h2>O que é investir?</h2><p>Investir significa aplicar dinheiro em ativos para fazê-lo crescer. Quando parado, a <strong>inflação corrói</strong> seu poder de compra.</p><ul><li><strong>Renda fixa:</strong> retorno previsível, menor risco</li><li><strong>Renda variável:</strong> maior potencial, mais risco</li><li><strong>Diversificação:</strong> combinar tipos reduz o risco geral</li></ul>"},
       {id:"b2",type:"quiz",questions:[
         {id:"q1",question:"Por que guardar dinheiro parado pode ser prejudicial?",options:["O banco pode confiscá-lo","A inflação corrói o poder de compra","As notas perdem valor físico","O governo tributa dinheiro parado"],correct:1,explanation:"A inflação faz os preços subirem, diminuindo o poder de compra do dinheiro parado."},
-        {id:"q2",question:"O que é renda variável?",options:["Retorno garantido pelo governo","Poupança com rendimento fixo","Investimento cujo retorno depende do mercado","Título do Banco Central"],correct:2,explanation:"Renda variável tem retorno que varia com o mercado — mais risco, maior potencial de retorno."}
+        {id:"q2",question:"O que é renda variável?",options:["Retorno garantido pelo governo","Poupança com rendimento fixo","Investimento cujo retorno depende do mercado","Título do Banco Central"],correct:2,explanation:"Renda variável tem retorno que varia com o mercado: mais risco, maior potencial de retorno."}
       ]}
     ]},
     {id:"m2",title:"Juros compostos",blocks:[
-      {id:"b3",type:"text",content:"<h2>Juros Compostos</h2><p>São <em>juros sobre juros</em> — o maior aliado do investidor. O crescimento é <strong>exponencial</strong> com o tempo.</p><blockquote>Retorno Real ≈ Retorno Nominal − Inflação</blockquote><p>Se rende 8%/ano e a inflação é 5%, seu ganho real é de apenas 3%.</p>"},
+      {id:"b3",type:"text",content:"<h2>Juros Compostos</h2><p>São <em>juros sobre juros</em>, o maior aliado do investidor. O crescimento é <strong>exponencial</strong> com o tempo.</p><blockquote>Retorno Real ≈ Retorno Nominal − Inflação</blockquote><p>Se rende 8%/ano e a inflação é 5%, seu ganho real é de apenas 3%.</p>"},
       {id:"b4",type:"video",url:"https://www.youtube.com/embed/wf91rEGw88Q",caption:"Juros compostos na prática"},
       {id:"b5",type:"quiz",questions:[
         {id:"q1",question:"Se um investimento rende 10%/ano e a inflação é 4%, qual o retorno real?",options:["14%","10%","6%","4%"],correct:2,explanation:"Retorno real ≈ 10% - 4% = 6%. Esse é o percentual que aumentou de fato seu poder de compra."}
@@ -89,7 +89,7 @@ const COURSES = [
       ]}
     ]},
     {id:"m4",title:"CDB, LCI e LCA",blocks:[
-      {id:"b8",type:"text",content:"<h2>CDB</h2><p>Emitido por bancos. Coberto pelo <strong>FGC</strong> até R$250.000.</p><h2>LCI e LCA</h2><p>Isentas de IR para pessoas físicas — o que eleva o retorno líquido.</p>"},
+      {id:"b8",type:"text",content:"<h2>CDB</h2><p>Emitido por bancos. Coberto pelo <strong>FGC</strong> até R$250.000.</p><h2>LCI e LCA</h2><p>Isentas de IR para pessoas físicas, o que eleva o retorno líquido.</p>"},
       {id:"b9",type:"quiz",questions:[
         {id:"q1",question:"LCI e LCA têm qual vantagem tributária?",options:["IR reduzido a 5%","Isenção total de IR","Isenção de IOF","Desconto de 50% no IR"],correct:1,explanation:"LCI e LCA são isentas de IR para pessoas físicas, aumentando o retorno líquido."}
       ]}
@@ -98,12 +98,12 @@ const COURSES = [
   {id:"c3",title:"Fundos Imobiliários",icon:"🏗️",color:"#7c6aff",level:"Intermediário",duration:"4h",
    modules:[{id:"m5",title:"O que são FIIs?",blocks:[
     {id:"b10",type:"text",content:"<h2>FIIs</h2><p>Permitem investir em imóveis de forma fracionada. Receba <strong>dividendos mensais</strong>.</p><p><strong>DY</strong> = Dividendos / Preço × 100</p>"},
-    {id:"b11",type:"quiz",questions:[{id:"q1",question:"O que é Dividend Yield?",options:["Preço da cota","Dividendo÷Preço","Taxa de vacância","Valor patrimonial"],correct:1,explanation:"DY = Dividendos ÷ Preço da cota — indica o rendimento percentual em dividendos."}]}
+    {id:"b11",type:"quiz",questions:[{id:"q1",question:"O que é Dividend Yield?",options:["Preço da cota","Dividendo÷Preço","Taxa de vacância","Valor patrimonial"],correct:1,explanation:"DY = Dividendos ÷ Preço da cota, que indica o rendimento percentual em dividendos."}]}
   ]}]},
   {id:"c4",title:"ETFs",icon:"🌍",color:"#ff9f43",level:"Intermediário",duration:"3h",
    modules:[{id:"m6",title:"O que são ETFs?",blocks:[
     {id:"b12",type:"text",content:"<h2>Exchange Traded Funds</h2><p>ETFs replicam índices. <strong>BOVA11</strong> replica o Ibovespa. <strong>IVVB11</strong> replica o S&P 500.</p>"},
-    {id:"b13",type:"quiz",questions:[{id:"q1",question:"O IVVB11 replica qual índice?",options:["Ibovespa","S&P 500","Nasdaq 100","Dow Jones"],correct:1,explanation:"O IVVB11 replica o S&P 500 — maiores empresas americanas via B3."}]}
+    {id:"b13",type:"quiz",questions:[{id:"q1",question:"O IVVB11 replica qual índice?",options:["Ibovespa","S&P 500","Nasdaq 100","Dow Jones"],correct:1,explanation:"O IVVB11 replica o S&P 500, as maiores empresas americanas via B3."}]}
   ]}]},
   {id:"c5",title:"Bolsa de Valores",icon:"📊",color:"#ff6b6b",level:"Avançado",duration:"5h",
    modules:[{id:"m7",title:"Como funcionam ações",blocks:[
@@ -260,11 +260,11 @@ function OnboardingTutorial({user,onFinish}){
   const STEPS=[
     {icon:"👋",accent:"var(--g)",
      title:`Bem-vindo ao FinQuest, ${firstName}!`,
-     desc:"Aqui você aprende a investir de verdade — praticando, sem arriscar um centavo do seu dinheiro real. Deixa eu te mostrar como funciona em 30 segundos.",
+     desc:"Aqui você aprende a investir de verdade, praticando, sem arriscar um centavo do seu dinheiro real. Deixa eu te mostrar como funciona em 30 segundos.",
      chip:null},
     {icon:"📈",accent:"var(--g)",
      title:"R$100 mil pra você investir",
-     desc:"Você começa com R$100.000 virtuais pra montar sua carteira com ações reais da B3. Os preços são de mercado — seus ganhos e perdas seguem a bolsa de verdade.",
+     desc:"Você começa com R$100.000 virtuais pra montar sua carteira com ações reais da B3. Os preços são de mercado: seus ganhos e perdas seguem a bolsa de verdade.",
      chip:"Simulador · risco zero"},
     {icon:"🎓",accent:"var(--blue)",
      title:"Aprenda no seu ritmo",
@@ -276,7 +276,7 @@ function OnboardingTutorial({user,onFinish}){
      chip:"Finny · IA exclusiva"},
     {icon:"🏆",accent:"var(--gold)",
      title:"Evolua e compita",
-     desc:"Ganhe XP, suba no ranking e desafie outros investidores em duelos. Tudo pronto — bora montar sua primeira carteira?",
+     desc:"Ganhe XP, suba no ranking e desafie outros investidores em duelos. Tudo pronto, bora montar sua primeira carteira?",
      chip:"Ranking · Duelos"},
   ];
   const[step,setStep]=useState(0);
@@ -375,7 +375,7 @@ function useSecretAdmin(cb){
 
 // ─── BRAPI HOOK ──────────────────────────────────────────────────
 function useMarket(){
-  // Build stock list — uses real API data if available, otherwise last known B3 close
+  // Build stock list: usa dados reais da API se disponíveis, senão o último fechamento B3
   const makeStocks=useCallback(function(overrides){
     return TICKERS.map(function(t){
       return {
@@ -423,7 +423,7 @@ function useMarket(){
       setApiStatus("ok");
     } catch(e){
       clearTimeout(timer);
-      console.warn("Brapi.dev falhou:", e.message, "— usando último fechamento B3");
+      console.warn("Brapi.dev falhou:", e.message, "usando último fechamento B3");
       setApiStatus("fallback");
     } finally{
       setLoading(false);
@@ -480,7 +480,7 @@ async function loadUserData(authUser) {
     // Sync cloud data into localStorage so we have a local backup
     try { localStorage.setItem(LS_PORT(authUser.id), JSON.stringify(portfolioObj)); } catch {}
   } else {
-    // Supabase returned empty — fall back to localStorage cache
+    // Supabase retornou vazio, usa o cache do localStorage
     try {
       const local = JSON.parse(localStorage.getItem(LS_PORT(authUser.id)) || "{}");
       Object.assign(portfolioObj, local);
@@ -517,7 +517,7 @@ export default function FinQuest(){
   const{macro}=useMacro();
 
   const showToast=msg=>setToast(msg);
-  // earnXp persiste o XP no Supabase — antes, XP de duelo/eventos era só local e sumia ao recarregar
+  // earnXp persiste o XP no Supabase. Antes, XP de duelo/eventos era só local e sumia ao recarregar
   const earnXp=pts=>setXp(p=>{
     const nx=p+pts;
     if(user) supabase.from("profiles").update({xp:nx}).eq("id",user.id).then(()=>{});
@@ -566,7 +566,7 @@ export default function FinQuest(){
     setPortfolio(userData.portfolio);
     setTrades(userData.trades);
     setProgress(userData.progress);
-    // tutorial de boas-vindas — só se nunca foi concluído/dispensado neste device
+    // tutorial de boas-vindas, só se nunca foi concluído/dispensado neste device
     try { if(!localStorage.getItem("fq_tut_"+authUser.id)) setShowTutorial(true); } catch {}
     navigate("/dashboard");
   }
@@ -1003,7 +1003,7 @@ function DashPage({cash,totalWealth,pnl,portfolio,stocks,xp,xpPct,level,LVL_NAME
         </div>
         <div style={{display:"flex",gap:10,alignItems:"center"}}>
           <button className="btn bghost bsm" onClick={fetchPrices} disabled={mktLoading}>{mktLoading?<span className="spinner"/>:"🔄"} Atualizar</button>
-          <div className="lvlbadge">⭐ Nível {level} — {LVL_NAMES[level]}</div>
+          <div className="lvlbadge">⭐ Nível {level}: {LVL_NAMES[level]}</div>
         </div>
       </div>
 
@@ -1062,7 +1062,7 @@ function DashPage({cash,totalWealth,pnl,portfolio,stocks,xp,xpPct,level,LVL_NAME
           <div className="card">
             <div className="clabel">XP & Nível</div>
             <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
-              <span style={{fontWeight:700,fontSize:14}}>Nível {level} — {LVL_NAMES[level]}</span>
+              <span style={{fontWeight:700,fontSize:14}}>Nível {level}: {LVL_NAMES[level]}</span>
               <span style={{fontSize:12,color:"var(--muted)"}}>{xp} XP</span>
             </div>
             <div className="xpw"><div className="xpf" style={{width:`${xpPct}%`}}/></div>
@@ -1108,7 +1108,7 @@ function DashPage({cash,totalWealth,pnl,portfolio,stocks,xp,xpPct,level,LVL_NAME
                   <div key={t} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 12px",background:"var(--bg2)",borderRadius:8}}>
                     <div><div style={{fontWeight:700}}>{t}</div><div style={{fontSize:11,color:"var(--muted)"}}>{pos.qty} ações · PM {fmt(pos.avgPrice)}</div></div>
                     <div style={{textAlign:"right"}}>
-                      <div style={{fontWeight:600}}>{s?fmt(s.price*pos.qty):"—"}</div>
+                      <div style={{fontWeight:600}}>{s?fmt(s.price*pos.qty):"-"}</div>
                       <div style={{fontSize:11,color:ret>=0?"var(--g)":"var(--red)"}}>{ret>=0?"+":""}{ret}%</div>
                     </div>
                   </div>
@@ -1179,7 +1179,7 @@ function SimPage({stocks,portfolio,cash,buyStock,sellStock,lastUpdated,mktLoadin
             {apiStatus==="ok"&&lastUpdated
               ?<><span className="live"/>Tempo real · {lastUpdated.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}</>
               :apiStatus==="fallback"
-              ?<span style={{color:"var(--gold)"}}>📅 Último fechamento B3 — atualizando...</span>
+              ?<span style={{color:"var(--gold)"}}>📅 Último fechamento B3, atualizando...</span>
               :apiStatus==="idle"||loading
               ?<span style={{color:"var(--muted)"}}>⏳ Conectando à B3...</span>
               :<span style={{color:"var(--red)"}}>⚠ Erro na API</span>
@@ -1320,7 +1320,7 @@ function SimPage({stocks,portfolio,cash,buyStock,sellStock,lastUpdated,mktLoadin
                   <div>
                     <div style={{fontSize:10,color:"var(--muted)"}}>Resultado</div>
                     <div style={{fontWeight:700,color:ret>=0?"var(--g)":"var(--red)"}}>{fmtP(ret)}</div>
-                    <div style={{fontSize:11,color:"var(--muted)"}}>{s?fmt(s.price*pos.qty):"—"}</div>
+                    <div style={{fontSize:11,color:"var(--muted)"}}>{s?fmt(s.price*pos.qty):"-"}</div>
                   </div>
                   <button className="btn bred bsm" onClick={()=>sellStock(t,pos.qty)}>Vender tudo</button>
                 </div>
@@ -1835,7 +1835,7 @@ function DuelPage({user,totalWealth,earnXp,showToast,stocks}){
     if(animating||!curStock) return;
     setAnimating(true);
     setTimeout(()=>{
-      // variação REAL do pregão (em %) — fonte: /api/stocks (Yahoo) ou último fechamento
+      // variação REAL do pregão (em %), fonte: /api/stocks (Yahoo) ou último fechamento
       const chg=Number(curStock.change)||0;
       // Você: Alta = comprado (long), Baixa = vendido (short), Neutro = fora (caixa)
       const myMult=choice==="bull"?1:choice==="bear"?-1:0;
@@ -1863,7 +1863,7 @@ function DuelPage({user,totalWealth,earnXp,showToast,stocks}){
   const chartData=hist.map(r=>({r:"R"+r.r,Você:r.myVal,Oponente:r.oppVal}));
   const won=myVal>oppVal;
 
-  // Premia o XP UMA vez quando o duelo termina em vitória — antes era chamado
+  // Premia o XP UMA vez quando o duelo termina em vitória. Antes era chamado
   // durante o render, premiando a cada re-render e nunca de forma confiável.
   const awarded=useRef(false);
   useEffect(()=>{
@@ -1970,10 +1970,10 @@ function DuelPage({user,totalWealth,earnXp,showToast,stocks}){
   // Lobby
   return(
     <div className="page">
-      <div className="topbar"><div><div className="ptitle syne">⚔️ Duelo de Carteiras</div><div className="psub">Compita em {ROUNDS} rodadas — quem ganhar mais vence!</div></div></div>
+      <div className="topbar"><div><div className="ptitle syne">⚔️ Duelo de Carteiras</div><div className="psub">Compita em {ROUNDS} rodadas, quem ganhar mais vence!</div></div></div>
       <div style={{padding:"14px 18px",background:"rgba(245,200,66,.06)",border:"1px solid rgba(245,200,66,.2)",borderRadius:10,marginBottom:26,fontSize:13,color:"var(--muted)"}}>
         <strong style={{color:"var(--gold)"}}>Como funciona: </strong>
-        Cada rodada sorteia uma <strong>ação real da B3</strong>. Você prevê se ela subiu (<strong style={{color:"var(--g)"}}>Alta</strong> = comprado), caiu (<strong style={{color:"var(--red)"}}>Baixa</strong> = vendido) ou fica de <strong>fora</strong>. O resultado usa a <strong>variação real do pregão</strong> — acertar a direção faz sua carteira render. Quem terminar com mais patrimônio ganha <strong style={{color:"var(--gold)"}}>+500 XP</strong>!
+        Cada rodada sorteia uma <strong>ação real da B3</strong>. Você prevê se ela subiu (<strong style={{color:"var(--g)"}}>Alta</strong> = comprado), caiu (<strong style={{color:"var(--red)"}}>Baixa</strong> = vendido) ou fica de <strong>fora</strong>. O resultado usa a <strong>variação real do pregão</strong>: acertar a direção faz sua carteira render. Quem terminar com mais patrimônio ganha <strong style={{color:"var(--gold)"}}>+500 XP</strong>!
       </div>
       <div className="g2">
         {OPPONENTS.map(o=>(
@@ -2028,9 +2028,9 @@ function RankPage({totalWealth,user}){
       {/* Card do usuário logado */}
       <div className="card" style={{marginBottom:18,borderColor:"rgba(0,214,143,.2)",background:"rgba(0,214,143,.04)",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"16px 20px"}}>
         <div style={{display:"flex",alignItems:"center",gap:11}}>
-          <div className="syne" style={{fontSize:24,fontWeight:800,color:"var(--g)",width:40,textAlign:"center"}}>{myPos?`#${myPos}`:"—"}</div>
+          <div className="syne" style={{fontSize:24,fontWeight:800,color:"var(--g)",width:40,textAlign:"center"}}>{myPos?`#${myPos}`:"-"}</div>
           <div className="avatar" style={{width:36,height:36,fontSize:12}}>{user?.name?.slice(0,2).toUpperCase()}</div>
-          <div><div style={{fontWeight:700}}>Você — {user?.name}</div><div style={{fontSize:11,color:"var(--muted)"}}>Patrimônio total</div></div>
+          <div><div style={{fontWeight:700}}>Você: {user?.name}</div><div style={{fontSize:11,color:"var(--muted)"}}>Patrimônio total</div></div>
         </div>
         <div className="syne" style={{fontSize:20,fontWeight:800,color:"var(--g)"}}>{fmt(totalWealth)}</div>
       </div>
@@ -2092,7 +2092,7 @@ function AIPage(){
       const payload={
         model:"claude-sonnet-4-6",
         max_tokens:1024,
-        system:`Você é a Finny, assistente financeira inteligente do FinQuest — plataforma brasileira de educação financeira gamificada.
+        system:`Você é a Finny, assistente financeira inteligente do FinQuest, plataforma brasileira de educação financeira gamificada.
 
 Personalidade: direta, acolhedora e encorajadora. Faz o usuário se sentir capaz, não intimidado. Sem jargão de guru.
 
@@ -2102,7 +2102,7 @@ Regras:
 - Responda sempre em português brasileiro
 - Use exemplos com valores em R$
 - Formate com **negrito** para termos importantes e conceitos-chave
-- Seja concisa — prefira respostas diretas e objetivas
+- Seja concisa, prefira respostas diretas e objetivas
 - Nunca recomende ativos específicos para comprar ou vender
 - Lembre que investimento real exige estudo e análise do perfil de risco
 - Se perguntarem algo fora de finanças, redirecione gentilmente`,
@@ -2207,7 +2207,7 @@ function ProfilePage({user,xp,xpPct,level,LVL_NAMES,totalWealth,pnl,courses,prog
               </div>
             )}
             <div style={{fontSize:13,color:"var(--muted)",marginBottom:8}}>{user?.email}</div>
-            <div className="lvlbadge">⭐ Nível {level} — {LVL_NAMES[level]}</div>
+            <div className="lvlbadge">⭐ Nível {level}: {LVL_NAMES[level]}</div>
           </div>
         </div>
         <div className="card">
@@ -2437,7 +2437,7 @@ function BlockEditor({block,isNew,onSave,onClose}){
       )}
       {d.type==="video"&&(
         <div>
-          <div className="fg"><label className="ilabel">URL YouTube</label><input className="inp" value={d.url} onChange={e=>setD(p=>({...p,url:e.target.value}))} placeholder="https://youtube.com/watch?v=..."/><div style={{fontSize:11,color:"var(--muted)",marginTop:4}}>URL normal — convertida automaticamente para embed.</div></div>
+          <div className="fg"><label className="ilabel">URL YouTube</label><input className="inp" value={d.url} onChange={e=>setD(p=>({...p,url:e.target.value}))} placeholder="https://youtube.com/watch?v=..."/><div style={{fontSize:11,color:"var(--muted)",marginTop:4}}>URL normal, convertida automaticamente para embed.</div></div>
           <div className="fg"><label className="ilabel">Legenda (opcional)</label><input className="inp" value={d.caption} onChange={e=>setD(p=>({...p,caption:e.target.value}))}/></div>
           {d.url&&toEmbed(d.url)&&<div style={{borderRadius:10,overflow:"hidden"}}><iframe src={toEmbed(d.url)} width="100%" height={190} frameBorder="0" allowFullScreen title="preview"/></div>}
         </div>
@@ -2608,7 +2608,7 @@ function AdminUsers(){
                 <span style={{fontWeight:600,fontSize:13,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.name}</span>
               </div>
             )}
-            <div style={{fontSize:12,color:"var(--muted)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.email||"—"}</div>
+            <div style={{fontSize:12,color:"var(--muted)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.email||"-"}</div>
             <div style={{fontSize:12,color:"var(--muted)"}}>{new Date(u.created_at).toLocaleDateString("pt-BR")}</div>
             <div style={{fontWeight:600,color:"var(--gold)",fontSize:13}}>{u.xp}</div>
             <span className={`badge ${lvlBadge(u.xp)}`} style={{fontSize:11}}>{lvlName(u.xp)}</span>

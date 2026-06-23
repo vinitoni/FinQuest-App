@@ -1,4 +1,4 @@
-# FinQuest — Deploy Guide
+# FinQuest: Deploy Guide
 
 ## O que está nesse pacote
 
@@ -78,7 +78,7 @@ O app já está configurado para buscar preços reais da B3 automaticamente.
 - Botão manual "🔄 Atualizar" no Dashboard e no Simulador
 - Se a API cair, exibe o último fechamento conhecido como fallback
 
-**Não é necessário fazer nada** — funciona automaticamente após o deploy.
+**Não é necessário fazer nada**, funciona automaticamente após o deploy.
 
 Se quiser mais requisições ou dados extras (histórico longo, FIIs, fundamentos), crie uma conta em https://brapi.dev e substitua `?token=demo` pela sua chave no arquivo `App.jsx`.
 

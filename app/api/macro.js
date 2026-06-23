@@ -1,4 +1,4 @@
-// Defaults baseados nos valores atuais (Jun/2026) — usados quando HG_BRASIL_KEY não está configurada
+// Defaults baseados nos valores atuais (Jun/2026), usados quando HG_BRASIL_KEY não está configurada
 const DEFAULTS = { cdi: 13.75, selic: 13.75, ipca: 5.0, ibov: null, ibovChange: null, usd: null, eur: null };
 
 export default async function handler(req, res) {

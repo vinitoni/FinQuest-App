@@ -1,4 +1,4 @@
-# FinQuest — Setup do Supabase
+# FinQuest: Setup do Supabase
 
 ## 1. Criar projeto no Supabase
 
@@ -9,7 +9,7 @@
    - **Name:** finquest
    - **Database Password:** escolha uma senha forte (guarde!)
    - **Region:** South America (São Paulo)
-5. Clique em **Create new project** — aguarde ~2 minutos
+5. Clique em **Create new project** e aguarde ~2 minutos
 
 ---
 
@@ -25,6 +25,7 @@ create table profiles (
   email text,
   xp integer not null default 0,
   cash numeric not null default 100000,
+  total_wealth numeric not null default 100000,
   created_at timestamptz not null default now()
 );
 
@@ -98,7 +99,7 @@ create policy "Usuário gerencia próprio progresso"
   on progress for all using (auth.uid() = user_id);
 ```
 
-Execute cada bloco separadamente. Você verá **"Success. No rows returned"** em cada um — isso é normal.
+Execute cada bloco separadamente. Você verá **"Success. No rows returned"** em cada um, isso é normal.
 
 ---
 
@@ -153,8 +154,8 @@ Acesse `http://localhost:5173`, crie uma conta e você já deverá ver o usuári
 | Ação do usuário | Salvo em |
 |---|---|
 | Criar conta | `profiles` (nome, email, xp=0, cash=100000) |
-| Comprar ação | `portfolio` (upsert) + `trades` (insert) + `profiles.cash` e `xp` |
-| Vender ação | `portfolio` (upsert/delete) + `trades` + `profiles.cash` e `xp` |
+| Comprar ação | `portfolio` (upsert) + `trades` (insert) + `profiles.cash`, `xp` e `total_wealth` |
+| Vender ação | `portfolio` (upsert/delete) + `trades` + `profiles.cash`, `xp` e `total_wealth` |
 | Completar módulo | `progress` (insert) + `profiles.xp` |
 | Fazer login | Carrega tudo automaticamente |
 

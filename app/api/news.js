@@ -56,7 +56,7 @@ function categorize(text) {
   return "Mercados";
 }
 
-// Strip HTML tags properly — handles > inside quoted attribute values
+// Strip HTML tags properly, handles > inside quoted attribute values
 function stripHtml(s) {
   return s
     .replace(/<(?:[^>'"]|'[^']*'|"[^"]*")*>/g, " ")

@@ -1,9 +1,9 @@
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
-// Hosts do Yahoo — tenta query1 e, se falhar, query2
+// Hosts do Yahoo: tenta query1 e, se falhar, query2
 const HOSTS = ["https://query1.finance.yahoo.com", "https://query2.finance.yahoo.com"];
 
-// Busca a cotação de UM ativo via endpoint /chart — não exige crumb nem cookie,
+// Busca a cotação de UM ativo via endpoint /chart, que não exige crumb nem cookie,
 // ao contrário do antigo /quote (que passou a retornar "Invalid Cookie" / HTTP 500).
 async function fetchOne(symbol) {
   const path = `/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
@@ -55,6 +55,6 @@ export default async function handler(req, res) {
     return res.status(503).json({ error: firstErr?.reason?.message || "todas as cotações falharam" });
   }
 
-  // Retorna o que conseguiu (parcial é melhor que nada — o front mantém fallback nos faltantes)
+  // Retorna o que conseguiu (parcial é melhor que nada, o front mantém fallback nos faltantes)
   return res.status(200).json({ results });
 }
