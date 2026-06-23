@@ -117,12 +117,6 @@ const COURSES = [
   ]}]},
 ];
 
-const OPPONENTS = [
-  {id:"o1",name:"Lucas Mendes",  avatar:"LM",rating:1840,wins:42,losses:18,style:"Agressivo"},
-  {id:"o2",name:"Ana Lima",      avatar:"AL",rating:1620,wins:28,losses:22,style:"Conservador"},
-  {id:"o3",name:"Carlos Souza",  avatar:"CS",rating:1390,wins:15,losses:30,style:"Moderado"},
-  {id:"o4",name:"Fernanda Costa",avatar:"FC",rating:1950,wins:55,losses:12,style:"Especulativo"},
-];
 
 const css = `
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
@@ -1851,187 +1845,201 @@ function NewsPage({stocks,apiStatus}){
   );
 }
 
-// ─── DUEL MODE (variação real da B3) ──────────────────────────────
-function DuelPage({user,totalWealth,earnXp,showToast,stocks}){
-  const[phase,setPhase]=useState("lobby");
-  const[opp,setOpp]=useState(null);
-  const[myVal,setMyVal]=useState(totalWealth);
-  const[oppVal,setOppVal]=useState(100000);
-  const[round,setRound]=useState(0);
-  const[hist,setHist]=useState([]);
-  const[animating,setAnimating]=useState(false);
-  const[rounds,setRounds]=useState([]); // ações sorteadas para cada rodada
-  const ROUNDS=5;
+// ─── DUEL MODE (duelo de carteiras por tempo, multiplayer real) ───
+const DURATIONS=[
+  {k:"1h", label:"1 hora",   ms:3600e3},
+  {k:"1d", label:"1 dia",    ms:86400e3},
+  {k:"1w", label:"1 semana", ms:604800e3},
+  {k:"1mo",label:"1 mês",    ms:2592000e3},
+];
+const DUEL_XP=500;
 
-  function startDuel(o){
-    // sorteia ROUNDS ações distintas da B3 para as rodadas
-    const pool=[...stocks].sort(()=>Math.random()-0.5).slice(0,ROUNDS);
-    setRounds(pool);
-    setOpp(o);setMyVal(totalWealth);setOppVal(100000);setRound(0);setHist([]);setPhase("duel");
+// valor de uma carteira "congelada" {ticker:qtd} pelos preços atuais
+function basketValue(basket,stocks){
+  if(!basket) return 0;
+  return Object.entries(basket).reduce((s,[t,q])=>{
+    const st=stocks.find(x=>x.ticker===t);
+    return s+(st?st.price*Number(q):0);
+  },0);
+}
+function fmtRemaining(ms){
+  if(ms<=0) return "encerrando...";
+  const s=Math.floor(ms/1000);
+  const d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60),sec=s%60;
+  if(d>0) return d+"d "+h+"h";
+  if(h>0) return h+"h "+m+"m";
+  if(m>0) return m+"m "+sec+"s";
+  return sec+"s";
+}
+
+function DuelPage({user,portfolio,stocks,earnXp,showToast}){
+  const[duels,setDuels]=useState([]);
+  const[opps,setOpps]=useState([]);
+  const[loading,setLoading]=useState(true);
+  const[selDur,setSelDur]=useState("1w");
+  const[selOpp,setSelOpp]=useState(null);
+  const[busy,setBusy]=useState(false);
+  const[now,setNow]=useState(Date.now());
+  const claimed=useRef(new Set());
+
+  const myFilter=user?`challenger_id.eq.${user.id},opponent_id.eq.${user.id}`:"";
+  const myBasket=Object.fromEntries(Object.entries(portfolio).map(([t,p])=>[t,p.qty]));
+  const myValue=basketValue(myBasket,stocks);
+
+  async function resolveDuel(d){
+    const cv=basketValue(d.c_basket,stocks),ov=basketValue(d.o_basket,stocks);
+    const cr=d.c_start>0?(cv/d.c_start-1)*100:0;
+    const orr=d.o_start>0?(ov/d.o_start-1)*100:0;
+    const winner=cr>orr?d.challenger_id:orr>cr?d.opponent_id:null;
+    await supabase.from("duels").update({status:"done",c_return:cr,o_return:orr,winner_id:winner}).eq("id",d.id).eq("status","active");
   }
-
-  const curStock=rounds[round]||null;
-
-  function playRound(choice){
-    if(animating||!curStock) return;
-    setAnimating(true);
-    setTimeout(()=>{
-      // variação REAL do pregão (em %), fonte: /api/stocks (Yahoo) ou último fechamento
-      const chg=Number(curStock.change)||0;
-      // Você: Alta = comprado (long), Baixa = vendido (short), Neutro = fora (caixa)
-      const myMult=choice==="bull"?1:choice==="bear"?-1:0;
-      const myΔ=myMult*chg/100;
-      // Bot: chance de acertar o lado = taxa de vitória do oponente (dificuldade)
-      const skill=opp.wins/(opp.wins+opp.losses);
-      const correct=chg>0?"bull":chg<0?"bear":"neutral";
-      let botChoice;
-      if(chg===0) botChoice="neutral";
-      else botChoice=Math.random()<skill?correct:(correct==="bull"?"bear":"bull");
-      const botMult=botChoice==="bull"?1:botChoice==="bear"?-1:0;
-      const oppΔ=botMult*chg/100;
-
-      const nMy=+(myVal*(1+myΔ)).toFixed(2);
-      const nOpp=+(oppVal*(1+oppΔ)).toFixed(2);
-      setMyVal(nMy);setOppVal(nOpp);
-      const entry={r:round+1,ticker:curStock.ticker,chg,choice,botChoice,myΔ,oppΔ,myVal:nMy,oppVal:nOpp};
-      setHist(h=>[...h,entry]);
-      setRound(r=>r+1);
-      setAnimating(false);
-      if(round+1>=ROUNDS) setTimeout(()=>setPhase("result"),700);
-    },1200);
+  async function claimXp(d){
+    if(d.status!=="done"||claimed.current.has(d.id)) return;
+    const meChal=d.challenger_id===user.id;
+    const awarded=meChal?d.c_awarded:d.o_awarded;
+    if(d.winner_id===user.id && !awarded){
+      claimed.current.add(d.id);
+      earnXp(DUEL_XP);
+      showToast("Você venceu o duelo! +"+DUEL_XP+" XP 🎉");
+      await supabase.from("duels").update(meChal?{c_awarded:true}:{o_awarded:true}).eq("id",d.id);
+    }
   }
-
-  const chartData=hist.map(r=>({r:"R"+r.r,Você:r.myVal,Oponente:r.oppVal}));
-  const won=myVal>oppVal;
-
-  // Premia o XP UMA vez quando o duelo termina em vitória. Antes era chamado
-  // durante o render, premiando a cada re-render e nunca de forma confiável.
-  const awarded=useRef(false);
-  useEffect(()=>{
-    if(phase==="result" && won && !awarded.current){ awarded.current=true; earnXp(500); showToast("+500 XP pela vitória!"); }
-    if(phase!=="result") awarded.current=false;
+  async function refresh(){
+    if(!user) return;
+    setLoading(true);
+    const[dRes,pRes]=await Promise.all([
+      supabase.from("duels").select("*").or(myFilter).order("created_at",{ascending:false}),
+      supabase.from("profiles").select("id,name,total_wealth").neq("id",user.id).order("total_wealth",{ascending:false}).limit(30),
+    ]);
+    let list=dRes.data||[];
+    const due=list.filter(d=>d.status==="active"&&new Date(d.end_at)<=new Date());
+    if(due.length){
+      await Promise.all(due.map(resolveDuel));
+      const r=await supabase.from("duels").select("*").or(myFilter).order("created_at",{ascending:false});
+      list=r.data||list;
+    }
+    for(const d of list) await claimXp(d);
+    setDuels(list);
+    setOpps(pRes.data||[]);
+    setLoading(false);
+  }
+  useEffect(()=>{refresh();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[phase]);
+  },[]);
+  useEffect(()=>{const id=setInterval(()=>setNow(Date.now()),1000);return()=>clearInterval(id);},[]);
 
-  if(phase==="result"){
+  async function createDuel(){
+    if(busy) return;
+    if(!selOpp){showToast("Escolha um adversário");return;}
+    if(myValue<=0){showToast("Você precisa ter ações na carteira para duelar");return;}
+    setBusy(true);
+    const dur=DURATIONS.find(x=>x.k===selDur);
+    const{data:oport}=await supabase.from("portfolio").select("ticker,qty").eq("user_id",selOpp);
+    const oBasket={};(oport||[]).forEach(r=>{oBasket[r.ticker]=r.qty;});
+    const oStart=basketValue(oBasket,stocks);
+    if(oStart<=0){showToast("Esse adversário ainda não tem ações na carteira");setBusy(false);return;}
+    const opp=opps.find(o=>o.id===selOpp);
+    const t0=new Date(),t1=new Date(t0.getTime()+dur.ms);
+    const{error}=await supabase.from("duels").insert({
+      challenger_id:user.id,opponent_id:selOpp,
+      challenger_name:user.name,opponent_name:opp?.name||"Adversário",
+      duration_label:dur.label,start_at:t0.toISOString(),end_at:t1.toISOString(),
+      c_basket:myBasket,o_basket:oBasket,c_start:myValue,o_start:oStart,status:"active",
+    });
+    setBusy(false);
+    if(error){showToast("Erro ao criar o duelo");return;}
+    setSelOpp(null);showToast("Duelo criado! Boa sorte 🍀");
+    refresh();
+  }
+
+  const active=duels.filter(d=>d.status==="active");
+  const done=duels.filter(d=>d.status==="done");
+
+  function DuelCard({d}){
+    const meChal=d.challenger_id===user.id;
+    const liveC=basketValue(d.c_basket,stocks),liveO=basketValue(d.o_basket,stocks);
+    const cR=d.status==="done"?d.c_return:(d.c_start>0?(liveC/d.c_start-1)*100:0);
+    const oR=d.status==="done"?d.o_return:(d.o_start>0?(liveO/d.o_start-1)*100:0);
+    const myR=meChal?cR:oR, opR=meChal?oR:cR;
+    const oppName=meChal?d.opponent_name:d.challenger_name;
+    const ended=d.status==="done";
+    const iWon=d.winner_id===user.id;
+    const leading=myR>opR;
     return(
-      <div className="page">
-        <div style={{textAlign:"center",padding:"20px 0 36px"}}>
-          <div style={{fontSize:60,marginBottom:14}}>{won?"🏆":"😤"}</div>
-          <div className="syne" style={{fontSize:38,fontWeight:800,color:won?"var(--gold)":"var(--muted)",marginBottom:6}}>{won?"Vitória!":"Derrota"}</div>
-          <div style={{fontSize:15,color:"var(--muted)",marginBottom:5}}>{won?"Você venceu "+opp.name+" com "+fmt(myVal)+"!":opp.name+" venceu com "+fmt(oppVal)+"."}</div>
-          {won&&<div style={{color:"var(--gold)",fontWeight:700,fontSize:15}}>+500 XP conquistados! 🎉</div>}
+      <div className="card" style={{padding:"15px 18px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:11}}>
+          <span style={{fontSize:12,color:"var(--muted)"}}>⚔️ Duelo {d.duration_label.toLowerCase()}</span>
+          {ended
+            ?<span className={"badge "+(iWon?"bg":d.winner_id?"br":"")}>{iWon?"🏆 Vitória":d.winner_id?"Derrota":"Empate"}</span>
+            :<span className="badge" style={{background:"rgba(245,200,66,.15)",color:"var(--gold)"}}>⏳ {fmtRemaining(new Date(d.end_at)-now)}</span>}
         </div>
-        {chartData.length>0&&(
-          <div className="card" style={{marginBottom:22}}>
-            <div className="clabel" style={{marginBottom:12}}>Evolução das carteiras</div>
-            <ResponsiveContainer width="100%" height={200}>
-              <LineChart data={chartData}>
-                <XAxis dataKey="r" tick={{fill:"var(--muted)",fontSize:11}} axisLine={false} tickLine={false}/>
-                <YAxis tick={{fill:"var(--muted)",fontSize:10}} axisLine={false} tickLine={false} tickFormatter={v=>`${(v/1000).toFixed(0)}k`}/>
-                <Tooltip content={<ChartTip/>}/>
-                <Line type="monotone" dataKey="Você" stroke="#00d68f" strokeWidth={2.5} dot={{r:4}} name="Você"/>
-                <Line type="monotone" dataKey="Oponente" stroke="#4d9eff" strokeWidth={2} dot={{r:4}} strokeDasharray="4 3" name="Oponente"/>
-              </LineChart>
-            </ResponsiveContainer>
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
+          <div style={{flex:1,textAlign:"center"}}>
+            <div style={{fontWeight:700,fontSize:13}}>Você</div>
+            <div className="syne" style={{fontSize:22,fontWeight:800,color:myR>=0?"var(--g)":"var(--red)"}}>{fmtP(myR)}</div>
           </div>
-        )}
-        <div style={{display:"flex",gap:11,justifyContent:"center"}}>
-          <button className="btn bprimary" onClick={()=>setPhase("lobby")}>🔄 Novo duelo</button>
-          <button className="btn boutline" onClick={()=>setPhase("lobby")}>← Lobby</button>
+          <div className="syne" style={{fontSize:16,fontWeight:800,color:leading?"var(--g)":"var(--muted)"}}>VS</div>
+          <div style={{flex:1,textAlign:"center"}}>
+            <div style={{fontWeight:700,fontSize:13}}>{oppName}</div>
+            <div className="syne" style={{fontSize:22,fontWeight:800,color:opR>=0?"var(--blue)":"var(--red)"}}>{fmtP(opR)}</div>
+          </div>
         </div>
+        {!ended&&<div style={{fontSize:11,color:"var(--muted)",textAlign:"center",marginTop:9}}>{leading?"Você está na frente. ":"Você está atrás. "}Valorização em tempo real das carteiras congeladas.</div>}
       </div>
     );
   }
 
-  if(phase==="duel") return(
-    <div className="page">
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:22}}>
-        <div className="ptitle syne">Rodada {round+1} de {ROUNDS}</div>
-        <div style={{display:"flex",gap:5}}>
-          {Array.from({length:ROUNDS}).map((_,i)=>(
-            <div key={i} style={{width:28,height:5,borderRadius:99,background:i<round?"var(--g)":i===round?"var(--gold)":"var(--b)"}}/>
-          ))}
-        </div>
-      </div>
-      <div className="duel-vs" style={{marginBottom:22}}>
-        <div className="duel-side">
-          <div style={{width:64,height:64,borderRadius:"50%",background:"linear-gradient(135deg,var(--g),#00a86b)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:20,margin:"0 auto 9px",color:"#000"}}>{user?.name?.slice(0,2).toUpperCase()}</div>
-          <div style={{fontWeight:700}}>{user?.name||"Você"}</div>
-          <div className="syne" style={{fontSize:20,fontWeight:800,color:"var(--g)",marginTop:5}}>{fmt(myVal)}</div>
-          <div style={{fontSize:12,color:myVal>=totalWealth?"var(--g)":"var(--red)",marginTop:2}}>{fmtP((myVal-totalWealth)/totalWealth*100)}</div>
-        </div>
-        <div className="syne" style={{fontSize:24,fontWeight:800,color:"var(--gold)",padding:"0 8px"}}>VS</div>
-        <div className="duel-side">
-          <div style={{width:64,height:64,borderRadius:"50%",background:"linear-gradient(135deg,#7c6aff,#4d9eff)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:20,margin:"0 auto 9px"}}>{opp.avatar}</div>
-          <div style={{fontWeight:700}}>{opp.name}</div>
-          <div className="syne" style={{fontSize:20,fontWeight:800,color:"var(--blue)",marginTop:5}}>{fmt(oppVal)}</div>
-          <div style={{fontSize:12,color:oppVal>=100000?"var(--g)":"var(--red)",marginTop:2}}>{fmtP((oppVal-100000)/100000*100)}</div>
-        </div>
-      </div>
-
-      <div className="card" style={{textAlign:"center",marginBottom:18}}>
-        {animating?(
-          <div>
-            <div className="spinner" style={{margin:"0 auto 12px",width:32,height:32,borderWidth:3}}/>
-            <div style={{fontSize:15,fontWeight:600}}>Processando rodada...</div>
-          </div>
-        ):(
-          <>
-            <div style={{fontSize:12,color:"var(--muted)",marginBottom:4,textTransform:"uppercase",letterSpacing:.5}}>Ação da rodada</div>
-            <div className="syne" style={{fontSize:24,fontWeight:800,marginBottom:2}}>{curStock?.ticker}</div>
-            <div style={{fontSize:13,color:"var(--muted)",marginBottom:16}}>{curStock?.name} · {curStock?.sector}</div>
-            <div style={{fontSize:14,fontWeight:600,marginBottom:14}}>Como você acha que <strong>{curStock?.ticker}</strong> fechou hoje na B3?</div>
-            <div style={{display:"flex",gap:11,justifyContent:"center"}}>
-              <button className="btn bprimary" style={{fontSize:15,padding:"12px 26px"}} onClick={()=>playRound("bull")} title="Comprado (long)">📈 Alta</button>
-              <button className="btn boutline" style={{fontSize:15,padding:"12px 26px"}} onClick={()=>playRound("neutral")} title="Fora do mercado">➡️ Neutro</button>
-              <button className="btn bred" style={{fontSize:15,padding:"12px 26px"}} onClick={()=>playRound("bear")} title="Vendido (short)">📉 Baixa</button>
-            </div>
-            <div style={{fontSize:11,color:"var(--muted)",marginTop:12}}>Alta = comprado · Baixa = vendido · Neutro = fica em caixa</div>
-          </>
-        )}
-      </div>
-
-      {hist.length>0&&(
-        <div className="card">
-          <div className="clabel" style={{marginBottom:11}}>Histórico</div>
-          {hist.slice().reverse().map(r=>(
-            <div key={r.r} style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,padding:"8px 11px",background:"var(--bg2)",borderRadius:7,marginBottom:6,fontSize:13}}>
-              <span style={{color:"var(--muted)",minWidth:64}}><strong style={{color:"var(--text)"}}>{r.ticker}</strong> {fmtP(r.chg)}</span>
-              <span>{r.choice==="bull"?"📈":r.choice==="bear"?"📉":"➡️"}</span>
-              <span style={{color:r.myΔ>=0?"var(--g)":"var(--red)"}}>{fmtP(r.myΔ*100)}</span>
-              <span style={{color:r.oppΔ>=0?"var(--blue)":"var(--red)"}}>{opp.name.split(" ")[0]}: {fmtP(r.oppΔ*100)}</span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-
-  // Lobby
   return(
     <div className="page">
-      <div className="topbar"><div><div className="ptitle syne">⚔️ Duelo de Carteiras</div><div className="psub">Compita em {ROUNDS} rodadas, quem ganhar mais vence!</div></div></div>
-      <div style={{padding:"14px 18px",background:"rgba(245,200,66,.06)",border:"1px solid rgba(245,200,66,.2)",borderRadius:10,marginBottom:26,fontSize:13,color:"var(--muted)"}}>
-        <strong style={{color:"var(--gold)"}}>Como funciona: </strong>
-        Cada rodada sorteia uma <strong>ação real da B3</strong>. Você prevê se ela subiu (<strong style={{color:"var(--g)"}}>Alta</strong> = comprado), caiu (<strong style={{color:"var(--red)"}}>Baixa</strong> = vendido) ou fica de <strong>fora</strong>. O resultado usa a <strong>variação real do pregão</strong>: acertar a direção faz sua carteira render. Quem terminar com mais patrimônio ganha <strong style={{color:"var(--gold)"}}>+500 XP</strong>!
+      <div className="topbar">
+        <div><div className="ptitle syne">⚔️ Duelo de Carteiras</div><div className="psub">Compita por rentabilidade real num período definido</div></div>
+        <button className="btn bghost bsm" onClick={refresh}>↻</button>
       </div>
-      <div className="g2">
-        {OPPONENTS.map(o=>(
-          <div key={o.id} className="card" style={{display:"flex",gap:14,alignItems:"center"}}>
-            <div style={{width:50,height:50,borderRadius:"50%",background:"linear-gradient(135deg,#ff9f43,#ff6b6b)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:17,flexShrink:0}}>{o.avatar}</div>
-            <div style={{flex:1}}>
-              <div style={{fontWeight:700,fontSize:15}}>{o.name}</div>
-              <div style={{fontSize:12,color:"var(--muted)",marginTop:2}}>{o.style}</div>
-              <div style={{display:"flex",gap:11,marginTop:6,fontSize:12}}>
-                <span>🏆 <strong>{o.wins}</strong>V/{o.losses}D</span>
-                <span className="badge bg">{Math.round(o.wins/(o.wins+o.losses)*100)}% win</span>
+
+      <div style={{padding:"13px 17px",background:"rgba(0,214,143,.06)",border:"1px solid rgba(0,214,143,.22)",borderRadius:10,marginBottom:22,fontSize:13,color:"var(--muted)"}}>
+        <strong style={{color:"var(--g)"}}>Como funciona: </strong>
+        Você escolhe a <strong>duração</strong> e um <strong>adversário</strong>. No início, as duas carteiras são <strong>congeladas</strong>. Quando o tempo acaba, <strong>quem valorizou mais (%)</strong> vence e leva <strong style={{color:"var(--gold)"}}>+{DUEL_XP} XP</strong>. Ex: suas WEGE3 +10% batem as PETR4 +5% do adversário.
+      </div>
+
+      <div className="card" style={{marginBottom:22}}>
+        <div className="clabel" style={{marginBottom:12}}>Criar novo duelo</div>
+        <div style={{fontSize:12,color:"var(--muted)",marginBottom:7}}>1. Duração</div>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}}>
+          {DURATIONS.map(x=>(
+            <button key={x.k} className={"btn bsm "+(selDur===x.k?"bprimary":"boutline")} onClick={()=>setSelDur(x.k)}>{x.label}</button>
+          ))}
+        </div>
+        <div style={{fontSize:12,color:"var(--muted)",marginBottom:7}}>2. Adversário <span style={{opacity:.7}}>(sua carteira vale {fmt(myValue)})</span></div>
+        {opps.length===0
+          ?<div style={{fontSize:12,color:"var(--muted)",padding:"8px 0"}}>Nenhum outro investidor cadastrado ainda.</div>
+          :<div style={{display:"flex",flexDirection:"column",gap:7,maxHeight:210,overflowY:"auto"}}>
+            {opps.map(o=>(
+              <div key={o.id} onClick={()=>setSelOpp(o.id)} style={{display:"flex",alignItems:"center",gap:11,padding:"9px 12px",borderRadius:9,cursor:"pointer",border:"1px solid "+(selOpp===o.id?"var(--g)":"var(--b)"),background:selOpp===o.id?"rgba(0,214,143,.07)":"var(--bg2)"}}>
+                <div className="avatar" style={{width:32,height:32,fontSize:11}}>{(o.name||"?").slice(0,2).toUpperCase()}</div>
+                <div style={{flex:1}}><div style={{fontWeight:600,fontSize:13}}>{o.name}</div><div style={{fontSize:11,color:"var(--muted)"}}>Patrimônio {fmt(o.total_wealth??100000)}</div></div>
+                {selOpp===o.id&&<span style={{color:"var(--g)",fontWeight:800}}>✓</span>}
               </div>
-            </div>
-            <button className="btn bprimary bsm" onClick={()=>startDuel(o)}>Desafiar</button>
-          </div>
-        ))}
+            ))}
+          </div>}
+        <button className="btn bprimary" style={{width:"100%",marginTop:16}} disabled={busy||!selOpp} onClick={createDuel}>{busy?"Criando...":"⚔️ Desafiar"}</button>
       </div>
+
+      {active.length>0&&(
+        <div style={{marginBottom:22}}>
+          <div className="clabel" style={{marginBottom:11}}>Duelos em andamento</div>
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>{active.map(d=><DuelCard key={d.id} d={d}/>)}</div>
+        </div>
+      )}
+
+      {done.length>0&&(
+        <div>
+          <div className="clabel" style={{marginBottom:11}}>Histórico</div>
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>{done.map(d=><DuelCard key={d.id} d={d}/>)}</div>
+        </div>
+      )}
+
+      {loading&&<div style={{textAlign:"center",color:"var(--muted)",fontSize:13,padding:20}}>Carregando duelos...</div>}
+      {!loading&&active.length===0&&done.length===0&&<div style={{textAlign:"center",color:"var(--muted)",fontSize:13,padding:20}}>Você ainda não tem duelos. Crie o primeiro acima!</div>}
     </div>
   );
 }
