@@ -91,7 +91,7 @@ export function SimPage({stocks,portfolio,cash,buyStock,sellStock,lastUpdated,mk
             }
           </div>
         </div>
-        <div style={{display:"flex",gap:10}}>
+        <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
           <button className="btn bghost bsm" onClick={fetchPrices} disabled={mktLoading}>{mktLoading?<span className="spinner"/>:"🔄"}</button>
           <div className="card" style={{padding:"8px 15px"}}><div style={{fontSize:10,color:"var(--muted)"}}>Saldo</div><div className="syne" style={{fontWeight:800,color:"var(--g)",fontSize:15}}>{fmt(cash)}</div></div>
           <div className="card" style={{padding:"8px 15px"}}><div style={{fontSize:10,color:"var(--muted)"}}>Em carteira</div><div className="syne" style={{fontWeight:800,fontSize:15}}>{fmt(totalPort)}</div></div>
@@ -126,7 +126,8 @@ export function SimPage({stocks,portfolio,cash,buyStock,sellStock,lastUpdated,mk
 
       {tab==="mkt"&&(
         <div className="g2">
-          <div className="card" style={{padding:0,overflow:"hidden"}}>
+          <div className="scroll-x">
+          <div className="card" style={{padding:0,overflow:"hidden",minWidth:460}}>
             <div style={{display:"flex",padding:"10px 16px",borderBottom:"1px solid var(--b)",gap:10}}>
               {[["72px","Ativo"],["1fr","Empresa"],["100px","Preço"],["80px","Var.%"],["76px",""]].map(([w,h])=>(
                 <div key={h} style={{width:w,flexShrink:0,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:".08em",color:"var(--muted)",flex:h==="Empresa"?"1":"none"}}>{h}</div>
@@ -152,6 +153,7 @@ export function SimPage({stocks,portfolio,cash,buyStock,sellStock,lastUpdated,mk
                 </div>
               </div>
             ))}
+          </div>
           </div>
 
           <div>

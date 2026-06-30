@@ -342,12 +342,12 @@ function DuelStockRow({stock,held,cash,onBuy,onSell}){
   const qty=Math.max(1,q||1);
   const canBuy=stock.price*qty<=cash;
   return(
-    <div className="card" style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px"}}>
+    <div className="card" style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",flexWrap:"wrap"}}>
       <div style={{width:96}}>
         <div className="syne" style={{fontWeight:700,color:"var(--g)",fontSize:13}}>{stock.ticker}</div>
         <div style={{fontSize:10,color:"var(--muted)"}}>{held>0?held+" em carteira":stock.sector}</div>
       </div>
-      <div style={{flex:1}}>
+      <div style={{flex:1,minWidth:120}}>
         <span style={{fontWeight:700,fontSize:13}}>R${stock.price.toFixed(2)}</span>
         <span className={"badge "+(stock.change>=0?"bg":"br")} style={{marginLeft:8}}>{stock.change>=0?"▲":"▼"}{Math.abs(stock.change).toFixed(2)}%</span>
       </div>

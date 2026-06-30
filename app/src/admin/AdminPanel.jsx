@@ -352,7 +352,8 @@ function AdminUsers(){
           <div key={l} className="card" style={{textAlign:"center"}}><div className="syne" style={{fontSize:24,fontWeight:800,color:c}}>{v}</div><div style={{fontSize:11,color:"var(--muted)",marginTop:3}}>{l}</div></div>
         ))}
       </div>
-      <div className="card" style={{padding:0,overflow:"hidden"}}>
+      <div className="scroll-x">
+      <div className="card" style={{padding:0,overflow:"hidden",minWidth:640}}>
         <div style={{display:"grid",gridTemplateColumns:"1.4fr 1fr 100px 70px 110px 60px",padding:"9px 17px",borderBottom:"1px solid var(--b)"}}>
           {["Nome","E-mail","Cadastro","XP","Nível",""].map(h=><div key={h} style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:".08em",color:"var(--muted)"}}>{h}</div>)}
         </div>
@@ -382,6 +383,7 @@ function AdminUsers(){
               onClick={()=>{setEditId(u.id);setEditName(u.name||"");}}>✏</button>
           </div>
         ))}
+      </div>
       </div>
     </div>
   );

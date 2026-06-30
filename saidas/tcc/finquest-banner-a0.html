@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FinQuest, Banner A0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<!-- ============================================================
+     TROQUE A URL DA APLICAÇÃO EM 2 LUGARES (busque por: APP_URL)
+     1) no <img> do QR (atributo src, parâmetro data=)
+     2) no texto visível abaixo do QR
+     ============================================================ -->
+<style>
+  :root{
+    --bg:#ffffff; --card:#f6f9fc; --card2:#eef3f9;
+    --b:#d7e1ec; --ink:#10202c; --muted:#5a6b7a;
+    --g:#00a86b; --g2:#00945e; --gold:#bf8f12; --blue:#2b7fd4; --red:#d64550; --purple:#7c5cd6;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{background:#cdd6df;}
+  body{font-family:'DM Sans',system-ui,sans-serif;color:var(--ink);display:flex;justify-content:center;align-items:flex-start;padding:24px;min-height:100vh;}
+  .syne{font-family:'Syne',sans-serif;}
+
+  /* .page = uma folha A0 exata (vertical); o banner é escalado por JS p/ caber na tela */
+  .page{
+    width:841mm;height:1189mm;overflow:hidden;background:var(--bg);
+    box-shadow:0 30px 90px rgba(0,0,0,.4);
+  }
+  .poster{
+    width:841mm;background:var(--bg);
+    display:flex;flex-direction:column;transform-origin:top center;
+  }
+
+  /* HEADER */
+  header{
+    background:linear-gradient(135deg,#06351f,#0a8a52 55%,#06351f);
+    color:#fff;padding:20mm 22mm 17mm;border-bottom:6px solid var(--g);
+    display:flex;align-items:center;justify-content:space-between;gap:24mm;flex:none;
+  }
+  header .left{min-width:0;}
+  header .logo{font-family:'Syne';font-weight:800;font-size:108px;letter-spacing:-1px;line-height:.95;}
+  header .logo .fin{color:#fff;} header .logo .quest{color:#7dffb9;}
+  header .logo .mark{display:inline-flex;align-items:center;justify-content:center;width:92px;height:92px;border-radius:22px;background:rgba(255,255,255,.16);font-size:50px;vertical-align:middle;margin-left:18px;}
+  header .sub{margin-top:14px;font-size:36px;color:#d6f7e7;font-weight:600;max-width:1600px;line-height:1.3;}
+  header .sub b{color:#7dffb9;}
+  header .meta{margin-top:16px;font-size:24px;color:#bfe9d4;font-weight:500;letter-spacing:.02em;}
+  header .meta span{color:#fff;font-weight:700;}
+
+  /* QR no cabeçalho */
+  .qr{flex:none;text-align:center;background:#fff;border-radius:22px;padding:18px 18px 14px;box-shadow:0 14px 40px rgba(0,0,0,.25);}
+  .qr img{display:block;width:330px;height:330px;margin:0 auto;}
+  .qr .cta{font-family:'Syne';font-weight:800;color:var(--g2);font-size:26px;margin-top:10px;}
+  .qr .url{font-size:20px;color:#33414f;font-weight:600;margin-top:2px;}
+
+  /* GRID em colunas (estilo pôster acadêmico) */
+  .grid{columns:3;column-gap:16mm;padding:16mm 18mm 6mm;}
+  .card{
+    background:var(--card);border:1.5px solid var(--b);border-radius:18px;
+    padding:13mm 13mm;margin-bottom:16mm;break-inside:avoid;display:flow-root;
+  }
+  .card .h{display:flex;align-items:center;gap:14px;font-family:'Syne';font-weight:800;font-size:34px;margin-bottom:16px;}
+  .card .h .n{font-family:'Syne';font-weight:800;font-size:28px;color:#fff;background:var(--g);width:48px;height:48px;border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .card .h .ic{font-size:38px;}
+
+  .a-green .h{color:var(--g2);}
+  .a-gold .h{color:var(--gold);} .a-gold .h .n{background:var(--gold);}
+  .a-blue .h{color:var(--blue);} .a-blue .h .n{background:var(--blue);}
+  .a-red .h{color:var(--red);} .a-red .h .n{background:var(--red);}
+  .a-purple .h{color:var(--purple);} .a-purple .h .n{background:var(--purple);}
+  .a-gold-tint{background:linear-gradient(180deg,rgba(191,143,18,.07),var(--card));border-color:rgba(191,143,18,.3);}
+  .a-green-tint{background:linear-gradient(180deg,rgba(0,168,107,.07),var(--card));border-color:rgba(0,168,107,.3);}
+  .a-blue-tint{background:linear-gradient(180deg,rgba(43,127,212,.07),var(--card));border-color:rgba(43,127,212,.28);}
+
+  p.lead{font-size:27px;line-height:1.5;color:#26343f;}
+  ul{list-style:none;display:flex;flex-direction:column;gap:11px;}
+  li{font-size:25px;line-height:1.38;color:#26343f;display:flex;gap:11px;align-items:flex-start;}
+  li .b{color:var(--muted);flex-shrink:0;}
+  li.chk .b{color:var(--g);font-weight:800;}
+  li b{color:#10202c;}
+
+  .tg{margin-bottom:12px;}
+  .tg .tl{font-size:20px;text-transform:uppercase;letter-spacing:.08em;color:var(--g2);font-weight:700;margin-bottom:7px;}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{font-size:22px;background:var(--card2);border:1.5px solid var(--b);border-radius:10px;padding:6px 14px;color:#2a3a47;font-weight:600;}
+
+  .flow{display:flex;flex-direction:column;align-items:center;gap:7px;}
+  .node{background:var(--card2);border:1.5px solid var(--b);border-radius:12px;padding:11px 18px;font-weight:600;font-size:24px;display:flex;align-items:center;gap:11px;width:100%;justify-content:center;}
+  .node .ic{font-size:26px;}
+  .arrow{color:var(--g);font-size:24px;line-height:1;}
+  .leaf-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;}
+  .leaf{background:rgba(0,168,107,.1);border:1.5px solid rgba(0,168,107,.32);border-radius:11px;padding:10px 4px;text-align:center;font-size:21px;font-weight:700;color:#0a7d52;}
+  .leaf .ic{display:block;font-size:26px;margin-bottom:3px;}
+  .note{margin-top:14px;font-size:21px;color:#46586a;line-height:1.42;background:var(--card2);border-radius:11px;padding:11px 15px;}
+  .note b{color:#1b2a36;}
+
+  .num{display:flex;gap:13px;align-items:flex-start;font-size:25px;line-height:1.38;color:#26343f;}
+  .num .c{flex-shrink:0;width:38px;height:38px;border-radius:50%;background:var(--card2);border:1.5px solid var(--b);color:var(--g2);font-weight:700;font-size:21px;display:flex;align-items:center;justify-content:center;font-family:'Syne';}
+  .num b{color:#10202c;}
+  .num .tag{font-size:20px;color:var(--muted);line-height:1.3;}
+
+  .kpis{columns:2;column-gap:24px;}
+  .kpis li{break-inside:avoid;margin-bottom:9px;}
+
+  .tl2{color:var(--g2);font-size:21px;text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:10px;}
+  .xp{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .xp .x{background:var(--card2);border:1.5px solid var(--b);border-radius:11px;padding:9px 15px;font-size:22px;display:flex;justify-content:space-between;}
+  .xp .x b{color:var(--g2);}
+
+  /* faixa de chamada para ação com QR (no rodapé) */
+  .cta-band{
+    margin:0 18mm 14mm;background:linear-gradient(135deg,#eafaf2,#dff5ea);
+    border:2px solid rgba(0,168,107,.35);border-radius:20px;
+    padding:14mm 16mm;display:flex;align-items:center;gap:20mm;break-inside:avoid;
+  }
+  .cta-band .qr2{flex:none;text-align:center;background:#fff;border-radius:18px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.12);}
+  .cta-band .qr2 img{display:block;width:300px;height:300px;margin:0 auto;}
+  .cta-band .txt h3{font-family:'Syne';font-weight:800;font-size:48px;color:var(--g2);line-height:1.1;margin-bottom:10px;}
+  .cta-band .txt p{font-size:28px;color:#26343f;line-height:1.4;}
+  .cta-band .txt .u{font-weight:700;color:var(--g2);}
+
+  footer{background:linear-gradient(135deg,#06351f,#0a8a52);color:#fff;border-top:6px solid var(--g);padding:15mm 22mm;display:flex;align-items:center;gap:26px;flex:none;}
+  footer .bulb{font-size:64px;}
+  footer .ft{font-size:22px;text-transform:uppercase;letter-spacing:.16em;color:#7dffb9;font-weight:700;margin-bottom:10px;}
+  footer .quote{font-size:34px;line-height:1.4;color:#eafaf1;font-weight:500;}
+  footer .quote b{color:#7dffb9;}
+  .credit{flex:none;padding:9mm 22mm;text-align:center;font-size:24px;color:var(--muted);background:var(--bg);}
+
+  @media print{
+    html,body{background:#fff;}
+    body{padding:0;margin:0;display:block;}
+    .page{box-shadow:none;border:none;width:841mm;height:1189mm;}
+    @page{size:A0;margin:0;}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+<div class="poster">
+
+  <header>
+    <div class="left">
+      <div class="logo syne"><span class="fin">Fin</span><span class="quest">Quest</span><span class="mark">📈</span></div>
+      <div class="sub">Plataforma de <b>Educação Financeira Gamificada</b> com Simulador Real da B3, Duelo Multiplayer e IA Tutora</div>
+      <div class="meta">Portfólio de Projeto · Autor: <span>Vinícius Toni Rocha</span> · Orientador: <span>Andrei Carniel</span> · 2026</div>
+    </div>
+    <div class="qr">
+      <!-- APP_URL (1/2) -->
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=0&data=https%3A%2F%2Ffinquest-app-omega.vercel.app" alt="QR Code FinQuest"/>
+      <div class="cta">Aponte a câmera e jogue</div>
+      <!-- APP_URL (2/2) -->
+      <div class="url">finquest-app-omega.vercel.app</div>
+    </div>
+  </header>
+
+  <div class="grid">
+
+    <!-- 1 -->
+    <div class="card a-green">
+      <div class="h"><span class="n">1</span><span class="ic">🎯</span>O QUE É?</div>
+      <p class="lead">Plataforma web onde o usuário <b>aprende a investir praticando</b>: recebe R$100.000 virtuais e monta uma carteira com ações reais da B3, com cursos por níveis, gamificação estilo Duolingo e um mentor com IA.</p>
+    </div>
+
+    <!-- 2 -->
+    <div class="card a-red">
+      <div class="h"><span class="n">2</span><span class="ic">⚠️</span>PROBLEMA</div>
+      <ul>
+        <li><span class="b">•</span>Brasileiro quer investir mas <b>não se sente seguro</b></li>
+        <li><span class="b">•</span>Medo de errar com dinheiro real</li>
+        <li><span class="b">•</span>Conteúdo cheio de jargão e intimidante</li>
+        <li><span class="b">•</span>Teoria sem prática, sem feedback</li>
+        <li><span class="b">•</span>Falta de motivação para continuar</li>
+      </ul>
+    </div>
+
+    <!-- 3 -->
+    <div class="card a-green">
+      <div class="h"><span class="n">3</span><span class="ic">⭐</span>DIFERENCIAL</div>
+      <ul>
+        <li class="chk"><span class="b">✓</span>Simulador com <b>cotações reais da B3</b></li>
+        <li class="chk"><span class="b">✓</span><b>Finny</b>, IA tutora (Claude) em PT-BR</li>
+        <li class="chk"><span class="b">✓</span>Gamificação: XP, níveis, ranking, duelo</li>
+        <li class="chk"><span class="b">✓</span>Cursos por níveis (Iniciante a Mestre)</li>
+        <li class="chk"><span class="b">✓</span><b>Duelo multiplayer</b> com preços reais ao vivo</li>
+        <li class="chk"><span class="b">✓</span>Modelo freemium, acessível</li>
+      </ul>
+    </div>
+
+    <!-- 4 -->
+    <div class="card">
+      <div class="h"><span class="n">4</span><span class="ic">💻</span>TECNOLOGIAS</div>
+      <div class="tg"><div class="tl">Frontend</div><div class="chips"><span class="chip">React 18</span><span class="chip">Vite</span><span class="chip">React Router</span><span class="chip">Recharts</span></div></div>
+      <div class="tg"><div class="tl">Backend</div><div class="chips"><span class="chip">Vercel Functions</span><span class="chip">Node.js</span></div></div>
+      <div class="tg"><div class="tl">Banco &amp; Auth</div><div class="chips"><span class="chip">Supabase</span><span class="chip">PostgreSQL</span><span class="chip">RLS</span></div></div>
+      <div class="tg"><div class="tl">Deploy &amp; Obs.</div><div class="chips"><span class="chip">Vercel</span><span class="chip">GitHub CI/CD</span><span class="chip">Speed Insights</span></div></div>
+    </div>
+
+    <!-- 5 -->
+    <div class="card a-green">
+      <div class="h"><span class="n">5</span><span class="ic">🗂️</span>ESTRUTURA DO SISTEMA</div>
+      <div class="flow">
+        <div class="node"><span class="ic">👤</span>USUÁRIO (Supabase Auth)</div>
+        <div class="arrow">▼</div>
+        <div class="node"><span class="ic">🧾</span>PERFIL (saldo · XP · patrimônio)</div>
+        <div class="arrow">▼</div>
+        <div class="leaf-row">
+          <div class="leaf"><span class="ic">💼</span>CARTEIRA</div>
+          <div class="leaf"><span class="ic">🔁</span>TRADES</div>
+          <div class="leaf"><span class="ic">🎓</span>PROGRESSO</div>
+        </div>
+      </div>
+      <div class="note"><b>Persistência dupla:</b> nuvem (Supabase) + cache local. Exclusão em cascata por usuário.</div>
+    </div>
+
+    <!-- 6 -->
+    <div class="card a-gold a-gold-tint">
+      <div class="h"><span class="n">6</span><span class="ic">🔌</span>APIs INTEGRADAS</div>
+      <ul>
+        <li class="num"><span class="c">1</span><div><b>Anthropic Claude</b> (sonnet-4-6)<div class="tag">Finny, IA tutora · /api/ai</div></div></li>
+        <li class="num"><span class="c">2</span><div><b>Yahoo Finance</b> (chart)<div class="tag">Cotações reais da B3 · /api/stocks</div></div></li>
+        <li class="num"><span class="c">3</span><div><b>HG Brasil Finance</b><div class="tag">CDI, SELIC, IPCA, IBOV, câmbio · /api/macro</div></div></li>
+        <li class="num"><span class="c">4</span><div><b>Supabase</b><div class="tag">Banco PostgreSQL + autenticação</div></div></li>
+        <li class="num"><span class="c">5</span><div><b>RSS de notícias</b><div class="tag">InfoMoney, Exame, G1 · /api/news</div></div></li>
+      </ul>
+    </div>
+
+    <!-- 7 -->
+    <div class="card a-green a-green-tint">
+      <div class="h"><span class="n">7</span><span class="ic">🎮</span>GAMIFICAÇÃO &amp; SIMULADOR</div>
+      <div class="tl2">Recompensas (XP)</div>
+      <div class="xp">
+        <div class="x">Comprar <b>+50</b></div>
+        <div class="x">Vender <b>+30</b></div>
+        <div class="x">Módulo <b>+150</b></div>
+        <div class="x">Duelo <b>+500</b></div>
+        <div class="x">Notícia <b>+10</b></div>
+        <div class="x">Níveis <b>1 a 5</b></div>
+      </div>
+      <div class="note" style="margin-top:12px;">Iniciante → Investidor → Estrategista → Trader → Mestre. Ranking global por patrimônio.</div>
+      <div class="tl2" style="margin-top:16px;">Simulador da Bolsa</div>
+      <ul>
+        <li><span class="b">•</span>R$100k virtuais, ativos reais da B3</li>
+        <li><span class="b">•</span>Compra/venda com <b>preço médio</b> ponderado</li>
+        <li><span class="b">•</span><b>Venda parcial</b> (25/50/total)</li>
+        <li><span class="b">•</span>Explica ON/PN/Units e fracionário (F)</li>
+      </ul>
+    </div>
+
+    <!-- 8 -->
+    <div class="card a-blue a-blue-tint">
+      <div class="h"><span class="n">8</span><span class="ic">⚔️</span>DUELO MULTIPLAYER</div>
+      <ul>
+        <li><span class="b">•</span>Dois jogadores, <b>R$100k cada</b> numa carteira independente</li>
+        <li><span class="b">•</span>Lobby aberto: um cria o desafio, o outro <b>aceita</b></li>
+        <li><span class="b">•</span>Ambos <b>negociam livremente</b> durante o período</li>
+        <li><span class="b">•</span>Placar ao vivo com <b>cotações reais da B3</b></li>
+        <li><span class="b">•</span>Vence <b>quem valorizar mais (%)</b> no fim</li>
+      </ul>
+      <div class="note">Base pronta para <b>torneios</b>: vários jogadores, data e premiação definidas pelo organizador.</div>
+    </div>
+
+    <!-- 9 -->
+    <div class="card a-blue">
+      <div class="h"><span class="n">9</span><span class="ic">📊</span>INDICADORES E KPIs</div>
+      <ul class="kpis">
+        <li><span class="b">•</span>Patrimônio total</li>
+        <li><span class="b">•</span>Lucro/prejuízo</li>
+        <li><span class="b">•</span>Saldo disponível</li>
+        <li><span class="b">•</span>Valor em carteira</li>
+        <li><span class="b">•</span>Preço médio (PM)</li>
+        <li><span class="b">•</span>Resultado por ativo</li>
+        <li><span class="b">•</span>Variação diária %</li>
+        <li><span class="b">•</span>XP e nível</li>
+        <li><span class="b">•</span>Posição no ranking</li>
+        <li><span class="b">•</span>CDI / SELIC / IPCA</li>
+        <li><span class="b">•</span>IBOV e câmbio</li>
+        <li><span class="b">•</span>Progresso nos cursos</li>
+      </ul>
+    </div>
+
+    <!-- 10 -->
+    <div class="card a-purple">
+      <div class="h"><span class="n">10</span><span class="ic">🛡️</span>SEGURANÇA</div>
+      <ul>
+        <li><span class="b">🔒</span>Chaves de API só no servidor, nunca no bundle</li>
+        <li><span class="b">🔒</span>Proxy serverless esconde chaves e resolve CORS</li>
+        <li><span class="b">🔒</span><b>Row Level Security</b>: cada um só vê seus dados</li>
+        <li><span class="b">🔒</span>Anon key pública por design, protegida por RLS</li>
+        <li><span class="b">🔒</span>Reset de senha por token</li>
+        <li><span class="b">🔒</span>Validações de saldo e quantidade</li>
+      </ul>
+    </div>
+
+    <!-- 11 -->
+    <div class="card a-green">
+      <div class="h"><span class="n">11</span><span class="ic">✅</span>QUALIDADE &amp; RESILIÊNCIA</div>
+      <ul>
+        <li class="chk"><span class="b">✓</span><b>CI/CD</b>: deploy automático a cada push</li>
+        <li class="chk"><span class="b">✓</span><b>Fallback</b> de cotações (último fechamento)</li>
+        <li class="chk"><span class="b">✓</span>Timeouts e resposta parcial nas APIs</li>
+        <li class="chk"><span class="b">✓</span>Macro e news com defaults seguros</li>
+        <li class="chk"><span class="b">✓</span>Build verificado + Speed Insights</li>
+        <li class="chk"><span class="b">✓</span>Persistência redundante (nuvem + local)</li>
+      </ul>
+    </div>
+
+    <!-- 12 -->
+    <div class="card a-purple">
+      <div class="h"><span class="n">12</span><span class="ic">🚀</span>TRABALHOS FUTUROS</div>
+      <ul>
+        <li><span class="b">•</span><b>Torneios</b> com vários jogadores e premiação</li>
+        <li><span class="b">•</span>Aplicativo móvel (PWA / React Native)</li>
+        <li><span class="b">•</span>Mais ativos: FIIs, ETFs e renda fixa</li>
+        <li><span class="b">•</span>Alertas e notificações de preço</li>
+        <li><span class="b">•</span>Premium com IA avançada e competições</li>
+        <li><span class="b">•</span>Gráficos históricos e análise de carteira</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- CHAMADA PARA AÇÃO com QR -->
+  <div class="cta-band">
+    <div class="qr2">
+      <!-- APP_URL (extra) -->
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=0&data=https%3A%2F%2Ffinquest-app-omega.vercel.app" alt="QR Code FinQuest"/>
+    </div>
+    <div class="txt">
+      <h3>Experimente agora, do seu celular</h3>
+      <p>Aponte a câmera, crie sua conta e ganhe <b>R$100.000 virtuais</b> para fazer seu primeiro investimento em segundos. Depois, desafie alguém para um <b>duelo de carteiras</b>.<br/><span class="u">finquest-app-omega.vercel.app</span></p>
+    </div>
+  </div>
+
+  <footer>
+    <div class="bulb">💡</div>
+    <div>
+      <div class="ft">Frase final</div>
+      <div class="quote">"O FinQuest não ensina a investir na teoria. Ele deixa você <b>praticar com dados reais da B3</b>, sem risco, e <b>transforma o medo em confiança</b> para investir de verdade."</div>
+    </div>
+  </footer>
+
+  <div class="credit">FinQuest · Educação Financeira Gamificada · Portfólio de Projeto</div>
+
+</div>
+</div>
+
+<script>
+  function fitPoster(){
+    var page=document.querySelector('.page');
+    var poster=document.querySelector('.poster');
+    if(!page||!poster) return;
+    poster.style.transform='none';
+    var s=Math.min(page.clientWidth/poster.offsetWidth, page.clientHeight/poster.offsetHeight, 1);
+    poster.style.transform='scale('+s+')';
+  }
+  if(document.fonts&&document.fonts.ready){document.fonts.ready.then(fitPoster);}
+  window.addEventListener('load',fitPoster);
+  window.addEventListener('resize',fitPoster);
+  window.addEventListener('beforeprint',fitPoster);
+  setTimeout(fitPoster,400);
+</script>
+</body>
+</html>

@@ -99,6 +99,15 @@ create policy "Usuário gerencia próprio progresso"
   on progress for all using (auth.uid() = user_id);
 ```
 
+### Tabela: duels (duelo de carteiras)
+Carteiras independentes de R$100k por duelo. O SQL completo está em
+[`supabase_duels.sql`](./supabase_duels.sql) — copie e rode no SQL Editor.
+Fluxo: criador abre (`open`) → oponente aceita (`active`, começa o tempo) →
+os dois negociam ações livremente → no fim (`done`) vence quem valorizou mais (%).
+
+> ⚠️ O script faz `drop table if exists duels` — apaga a tabela antiga de duelos
+> e seus dados de teste antes de recriar com a nova estrutura.
+
 Execute cada bloco separadamente. Você verá **"Success. No rows returned"** em cada um, isso é normal.
 
 ---
