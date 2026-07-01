@@ -157,9 +157,3 @@ Acesse `http://localhost:5173`, crie uma conta e você já deverá ver o usuári
 | Vender ação | `portfolio` (upsert/delete) + `trades` + `profiles.cash` e `xp` |
 | Completar módulo | `progress` (insert) + `profiles.xp` |
 | Fazer login | Carrega tudo automaticamente |
-
-## Painel Admin
-
-- Type `finquestadmin` em qualquer lugar → tela de login admin
-- Credenciais: `admin@finquest.com` / `admin123`
-- A aba **Usuários** agora mostra todos os cadastros reais em tempo real
