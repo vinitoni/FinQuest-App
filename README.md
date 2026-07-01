@@ -1,4 +1,4 @@
-# FinQuest — Deploy Guide
+# FinQuest - Guia Completo
 
 ## O que está nesse pacote
 
