@@ -51,7 +51,7 @@ export function Landing({onLogin,onSignup,stocks}){
         </div>
         <div style={{maxWidth:1160,margin:"0 auto",padding:"70px 40px"}}>
           <div className="syne" style={{fontSize:"clamp(24px,4vw,42px)",fontWeight:800,letterSpacing:"-.02em",marginBottom:42}}>O que torna o FinQuest diferente</div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:14}}>
+          <div className="feat-grid" style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14}}>
             {[["📡","Preços reais","Cotações B3 via Yahoo Finance com ~15min delay"],
               ["🤖","IA Tutora","Tire dúvidas com Claude AI especializado em investimentos"],
               ["⚔️","Modo Duelo","Compita com outros investidores em tempo real"],
