@@ -19,8 +19,6 @@ finquest/
 
 - **Node.js 18+** → https://nodejs.org (baixe a versão LTS)
 - **Conta no GitHub** → https://github.com (gratuita)
-- **Conta na Vercel** → https://vercel.com (gratuita, login com GitHub)
-
 ---
 
 ## Passo a passo completo
