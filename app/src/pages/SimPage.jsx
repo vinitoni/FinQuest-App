@@ -127,10 +127,10 @@ export function SimPage({stocks,portfolio,cash,buyStock,sellStock,lastUpdated,mk
       {tab==="mkt"&&(
         <div className="g2">
           <div className="scroll-x">
-          <div className="card" style={{padding:0,overflow:"hidden",minWidth:460}}>
+          <div className="card" style={{padding:0,overflow:"hidden",minWidth:340}}>
             <div style={{display:"flex",padding:"10px 16px",borderBottom:"1px solid var(--b)",gap:10}}>
-              {[["72px","Ativo"],["1fr","Empresa"],["100px","Preço"],["80px","Var.%"],["76px",""]].map(([w,h])=>(
-                <div key={h} style={{width:w,flexShrink:0,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:".08em",color:"var(--muted)",flex:h==="Empresa"?"1":"none"}}>{h}</div>
+              {[["64px","Ativo",""],["1fr","Empresa",""],["84px","Preço",""],["70px","Var.%",""],["68px","","mkt-op"]].map(([w,h,cls])=>(
+                <div key={h+cls} className={cls} style={{width:w,flexShrink:0,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:".08em",color:"var(--muted)",flex:h==="Empresa"?"1":"none"}}>{h}</div>
               ))}
             </div>
             {stocks.map(s=>(
@@ -140,15 +140,15 @@ export function SimPage({stocks,portfolio,cash,buyStock,sellStock,lastUpdated,mk
                 </div>
                 <div style={{flex:1,minWidth:0,cursor:"pointer"}} onClick={()=>{setSel(s);setQty(1);}}>
                   <div style={{fontWeight:600,fontSize:13,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.name}</div>
-                  <div style={{fontSize:11,color:"var(--muted)"}}>{s.sector}</div>
+                  <div style={{fontSize:11,color:"var(--muted)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.sector}</div>
                 </div>
-                <div style={{width:96,flexShrink:0}}>
+                <div style={{width:84,flexShrink:0}}>
                   <span style={{fontWeight:700,fontSize:13}}>R${s.price.toFixed(2)}</span>
                 </div>
-                <div style={{width:78,flexShrink:0}}>
+                <div style={{width:70,flexShrink:0}}>
                   <span className={"badge "+(s.change>=0?"bg":"br")}>{s.change>=0?"▲":"▼"}{Math.abs(s.change).toFixed(2)}%</span>
                 </div>
-                <div style={{width:68,flexShrink:0}}>
+                <div className="mkt-op" style={{width:68,flexShrink:0}}>
                   <button className="btn bghost bxs" onClick={()=>{setSel(s);setQty(1);}}>Operar</button>
                 </div>
               </div>

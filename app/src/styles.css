@@ -135,6 +135,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);ove
   /* listas/tabelas largas rolam na horizontal em vez de quebrar o layout */
   .scroll-x{overflow-x:auto;-webkit-overflow-scrolling:touch;}
   .scroll-x::-webkit-scrollbar{height:3px;}
+  /* botão redundante (linha já é clicável) some no mobile pra tabela caber sem rolagem */
+  .mkt-op{display:none;}
 }
 @media(max-width:460px){
   .sidebar{width:50px;}

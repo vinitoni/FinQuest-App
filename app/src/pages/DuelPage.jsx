@@ -244,12 +244,12 @@ export function DuelPage({user,stocks,earnXp,showToast}){
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
             {myOpen.map(d=>(
               <div key={d.id} className="card" style={{display:"flex",alignItems:"center",gap:12,padding:"14px 18px"}}>
-                <span style={{fontSize:22}}>🕒</span>
-                <div style={{flex:1}}>
-                  <div style={{fontWeight:700,fontSize:14}}>Duelo {d.duration_label.toLowerCase()}</div>
+                <span style={{fontSize:22,flexShrink:0}}>🕒</span>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontWeight:700,fontSize:14,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>Duelo {d.duration_label.toLowerCase()}</div>
                   <div style={{fontSize:11,color:"var(--muted)"}}>Esperando alguém aceitar seu desafio</div>
                 </div>
-                <button className="btn bred bsm" onClick={()=>cancelDuel(d)}>Cancelar</button>
+                <button className="btn bred bsm" style={{flexShrink:0}} onClick={()=>cancelDuel(d)}>Cancelar</button>
               </div>
             ))}
           </div>
@@ -263,12 +263,12 @@ export function DuelPage({user,stocks,earnXp,showToast}){
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
             {openDuels.map(d=>(
               <div key={d.id} className="card" style={{display:"flex",alignItems:"center",gap:12,padding:"14px 18px"}}>
-                <div className="avatar" style={{width:36,height:36,fontSize:12}}>{(d.creator_name||"?").slice(0,2).toUpperCase()}</div>
-                <div style={{flex:1}}>
-                  <div style={{fontWeight:700,fontSize:14}}>{d.creator_name} desafiou</div>
+                <div className="avatar" style={{width:36,height:36,fontSize:12,flexShrink:0}}>{(d.creator_name||"?").slice(0,2).toUpperCase()}</div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontWeight:700,fontSize:14,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{d.creator_name} desafiou</div>
                   <div style={{fontSize:11,color:"var(--muted)"}}>Duelo de {d.duration_label.toLowerCase()} · R$100k cada</div>
                 </div>
-                <button className="btn bprimary bsm" disabled={busy} onClick={()=>acceptDuel(d)}>Aceitar ⚔️</button>
+                <button className="btn bprimary bsm" style={{flexShrink:0}} disabled={busy} onClick={()=>acceptDuel(d)}>Aceitar ⚔️</button>
               </div>
             ))}
           </div>

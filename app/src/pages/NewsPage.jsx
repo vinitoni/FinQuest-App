@@ -196,11 +196,11 @@ export function NewsPage({stocks,apiStatus}){
                     {s.ticker.slice(0,4)}
                   </span>
                 </div>
-                <div style={{flex:1}}>
-                  <div style={{fontWeight:700,fontSize:14}}>{s.name}</div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontWeight:700,fontSize:14,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.name}</div>
                   <div style={{fontSize:12,color:"var(--muted)",marginTop:1}}>{s.sector}</div>
                 </div>
-                <div style={{textAlign:"right"}}>
+                <div style={{textAlign:"right",flexShrink:0}}>
                   <div className="syne" style={{fontSize:16,fontWeight:800}}>R${s.price.toFixed(2)}</div>
                   <span className={"badge "+(s.change>=0?"bg":"br")} style={{marginTop:3,display:"inline-flex"}}>
                     {s.change>=0?"▲":"▼"}{Math.abs(s.change).toFixed(2)}%

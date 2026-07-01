@@ -115,10 +115,10 @@ export function DashPage({cash,totalWealth,pnl,portfolio,stocks,xp,xpPct,level,L
               const d=progress[c.id]?.size||0;
               return(
                 <div key={c.id} style={{display:"flex",alignItems:"center",gap:8,marginBottom:9}}>
-                  <span style={{fontSize:15}}>{c.icon}</span>
-                  <div style={{flex:1}}>
-                    <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:3}}>
-                      <span style={{color:"var(--muted)"}}>{c.title}</span>
+                  <span style={{fontSize:15,flexShrink:0}}>{c.icon}</span>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{display:"flex",justifyContent:"space-between",gap:8,fontSize:11,marginBottom:3}}>
+                      <span style={{color:"var(--muted)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.title}</span>
                       <span style={{color:d===c.modules.length?"var(--g)":"var(--muted)"}}>{d}/{c.modules.length}</span>
                     </div>
                     <div className="prog" style={{height:3}}><div className="pfill" style={{width:`${(d/c.modules.length)*100}%`,background:c.color}}/></div>

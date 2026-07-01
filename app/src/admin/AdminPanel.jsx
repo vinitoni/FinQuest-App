@@ -60,9 +60,9 @@ function AdminOverview({courses,events}){
         <div className="clabel" style={{marginBottom:13}}>Cursos</div>
         {courses.map(c=>(
           <div key={c.id} style={{display:"flex",alignItems:"center",gap:11,padding:"9px 13px",background:"var(--bg2)",borderRadius:9,marginBottom:7}}>
-            <span style={{fontSize:20}}>{c.icon}</span>
-            <div style={{flex:1}}><div style={{fontWeight:600}}>{c.title}</div><div style={{fontSize:11,color:"var(--muted)"}}>{c.modules.length} módulos</div></div>
-            <span className={`badge ${c.level==="Iniciante"?"bg":c.level==="Intermediário"?"bb":"br"}`}>{c.level}</span>
+            <span style={{fontSize:20,flexShrink:0}}>{c.icon}</span>
+            <div style={{flex:1,minWidth:0}}><div style={{fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.title}</div><div style={{fontSize:11,color:"var(--muted)"}}>{c.modules.length} módulos</div></div>
+            <span className={`badge ${c.level==="Iniciante"?"bg":c.level==="Intermediário"?"bb":"br"}`} style={{flexShrink:0}}>{c.level}</span>
           </div>
         ))}
       </div>

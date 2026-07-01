@@ -29,12 +29,12 @@ export function AcademyPage({courses,progress,completeModule}){
           return(
             <div key={m.id} className="card" style={{display:"flex",alignItems:"center",gap:13,cursor:"pointer",borderColor:done?"rgba(0,214,143,.3)":"var(--b)"}} onClick={()=>setSm(m.id)}>
               <div style={{width:34,height:34,borderRadius:"50%",background:done?"var(--g)":"var(--b)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:13,color:done?"#000":"var(--muted)",flexShrink:0}}>{done?"✓":i+1}</div>
-              <div style={{flex:1}}>
-                <div style={{fontWeight:700,fontSize:14}}>{m.title}</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontWeight:700,fontSize:14,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{m.title}</div>
                 <div style={{fontSize:11,color:"var(--muted)",marginTop:2}}>{m.blocks.map(b=>b.type==="quiz"?`📝 Quiz(${b.questions?.length||0})`:b.type==="video"?"🎥":b.type==="image"?"🖼️":"📄").join(" · ")}</div>
               </div>
-              {done&&<span className="badge bg">✓</span>}
-              <button className="btn bghost bsm">{done?"Revisar":"Estudar"} →</button>
+              {done&&<span className="badge bg" style={{flexShrink:0}}>✓</span>}
+              <button className="btn bghost bsm" style={{flexShrink:0}}>{done?"Revisar":"Estudar"} →</button>
             </div>
           );
         })}
