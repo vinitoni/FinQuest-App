@@ -4,7 +4,7 @@ import { fmt, fmtP } from "../lib/format";
 import { Modal } from "../components/Modal";
 
 // Linha da carteira com venda parcial (estilo corretora)
-function PositionRow({ticker,pos,stock,sellStock,setInfo}){
+function PositionRow({ticker,pos,stock,onSell,setInfo}){
   const[q,setQ]=useState(1);
   const max=pos.qty;
   const cur=stock?stock.price:pos.avgPrice;
@@ -35,7 +35,7 @@ function PositionRow({ticker,pos,stock,sellStock,setInfo}){
           <button className="btn bghost bxs" onClick={()=>setQ(max)}>Tudo</button>
         </div>
         <span style={{fontSize:12,color:"var(--muted)",marginLeft:"auto"}}>≈ {fmt(cur*sellQ)}</span>
-        <button className="btn bred bsm" onClick={()=>sellStock(ticker,sellQ)}>Vender {sellQ===max?"tudo":sellQ}</button>
+        <button className="btn bred bsm" onClick={()=>onSell(ticker,sellQ,cur)}>Vender {sellQ===max?"tudo":sellQ}</button>
       </div>
     </div>
   );
@@ -46,6 +46,14 @@ export function SimPage({stocks,portfolio,cash,buyStock,sellStock,lastUpdated,mk
   const[qty,setQty]=useState(1);
   const[tab,setTab]=useState("mkt");
   const[info,setInfo]=useState(null);
+  const[confirm,setConfirm]=useState(null); // {type:"buy"|"sell",ticker,qty,price}
+
+  function runConfirm(){
+    if(!confirm) return;
+    if(confirm.type==="buy") buyStock(confirm.ticker,confirm.qty);
+    else sellStock(confirm.ticker,confirm.qty);
+    setConfirm(null);
+  }
 
   const INFO={
     price:{t:"Como funcionam os preços?",b:"Cotações reais da B3 via <strong>Yahoo Finance</strong> com ~15min de delay. Atualização automática a cada 5 minutos. Quando indisponível, exibimos o último fechamento conhecido."},
@@ -75,6 +83,21 @@ export function SimPage({stocks,portfolio,cash,buyStock,sellStock,lastUpdated,mk
       <Modal open={!!info} onClose={()=>setInfo(null)} title={info?INFO[info]?.t:""} width={480}>
         {info&&<div style={{fontSize:14,color:"#b8cfe0",lineHeight:1.7}} dangerouslySetInnerHTML={{__html:INFO[info]?.b}}/>}
         <button className="btn boutline" style={{width:"100%",marginTop:18}} onClick={()=>setInfo(null)}>Entendido</button>
+      </Modal>
+
+      <Modal open={!!confirm} onClose={()=>setConfirm(null)} title={confirm?.type==="buy"?"Confirmar compra":"Confirmar venda"} width={380}>
+        {confirm&&<>
+          <div style={{fontSize:14,marginBottom:14}}>
+            {confirm.type==="buy"?"Comprar":"Vender"} <strong>{confirm.qty}x {confirm.ticker}</strong> a {fmt(confirm.price)} cada.
+          </div>
+          <div style={{padding:"10px 12px",background:"var(--bg2)",borderRadius:8,marginBottom:16,display:"flex",justifyContent:"space-between",fontSize:13}}>
+            <span style={{color:"var(--muted)"}}>Total</span><strong>{fmt(confirm.price*confirm.qty)}</strong>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+            <button className="btn boutline" onClick={()=>setConfirm(null)}>Cancelar</button>
+            <button className={confirm.type==="buy"?"btn bprimary":"btn bred"} onClick={runConfirm}>Confirmar</button>
+          </div>
+        </>}
       </Modal>
 
       <div className="topbar">
@@ -134,11 +157,11 @@ export function SimPage({stocks,portfolio,cash,buyStock,sellStock,lastUpdated,mk
               ))}
             </div>
             {stocks.map(s=>(
-              <div key={s.ticker} className="stk-row" style={{background:sel?.ticker===s.ticker?"rgba(0,214,143,.04)":""}}>
-                <div style={{width:64,flexShrink:0,cursor:"pointer"}} onClick={()=>{setSel(s);setQty(1);}}>
+              <div key={s.ticker} className="stk-row" style={{background:sel?.ticker===s.ticker?"rgba(0,214,143,.04)":""}} onClick={()=>{setSel(s);setQty(1);}}>
+                <div style={{width:64,flexShrink:0}}>
                   <span className="syne" style={{fontWeight:700,color:"var(--g)",fontSize:12}}>{s.ticker}</span>
                 </div>
-                <div style={{flex:1,minWidth:0,cursor:"pointer"}} onClick={()=>{setSel(s);setQty(1);}}>
+                <div style={{flex:1,minWidth:0}}>
                   <div style={{fontWeight:600,fontSize:13,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.name}</div>
                   <div style={{fontSize:11,color:"var(--muted)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.sector}</div>
                 </div>
@@ -196,8 +219,8 @@ export function SimPage({stocks,portfolio,cash,buyStock,sellStock,lastUpdated,mk
                     )}
                   </div>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-                    <button className="btn bprimary" onClick={()=>buyStock(sel.ticker,qty)}>🟢 Comprar</button>
-                    <button className="btn bred" onClick={()=>sellStock(sel.ticker,qty)} disabled={!portfolio[sel.ticker]}>🔴 Vender</button>
+                    <button className="btn bprimary" onClick={()=>setConfirm({type:"buy",ticker:sel.ticker,qty,price:sel.price})}>🟢 Comprar</button>
+                    <button className="btn bred" onClick={()=>setConfirm({type:"sell",ticker:sel.ticker,qty,price:sel.price})} disabled={!portfolio[sel.ticker]}>🔴 Vender</button>
                   </div>
                 </div>
               </div>
@@ -222,7 +245,7 @@ export function SimPage({stocks,portfolio,cash,buyStock,sellStock,lastUpdated,mk
         ):(
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
             {Object.entries(portfolio).map(([t,pos])=>(
-              <PositionRow key={t} ticker={t} pos={pos} stock={stocks.find(s=>s.ticker===t)} sellStock={sellStock} setInfo={setInfo}/>
+              <PositionRow key={t} ticker={t} pos={pos} stock={stocks.find(s=>s.ticker===t)} onSell={(ticker,q,price)=>setConfirm({type:"sell",ticker,qty:q,price})} setInfo={setInfo}/>
             ))}
           </div>
         )
