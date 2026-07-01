@@ -1,104 +1,102 @@
-# FinQuest: Deploy Guide
+# FinQuest — Guia Técnico
 
-## O que está nesse pacote
+> Visão geral do produto, funcionalidades e arquitetura: [README principal](../README.md).
+> Este documento cobre **execução local, configuração e deploy**.
+
+## Estrutura do projeto
 
 ```
-finquest/
-├── index.html          ← entrada do app
-├── package.json        ← dependências
-├── vite.config.js      ← configuração do build
-├── .gitignore
-└── src/
-    ├── main.jsx        ← inicializa o React
-    └── App.jsx         ← todo o app FinQuest
+app/
+├── index.html            ← entrada do app
+├── package.json           ← dependências
+├── vite.config.js         ← configuração do build
+├── vercel.json             ← rewrites de rota para SPA
+├── api/                    ← backend serverless (Vercel Functions)
+│   ├── stocks.js             cotações B3 (Yahoo Finance, com fallback de host)
+│   ├── macro.js               CDI/SELIC/IPCA/câmbio (HG Brasil)
+│   ├── news.js                 feed de notícias + análise de sentimento
+│   ├── ai.js                    proxy seguro para a API da Anthropic (Finny)
+│   └── admin-update.js           updates administrativos autenticados por token
+├── src/
+│   ├── App.jsx              ← estado raiz, sessão, roteamento, regras de negócio
+│   ├── pages/                ← uma tela por arquivo
+│   ├── components/            ← AppShell, Modal, Toast, ChartTip, OnboardingTutorial
+│   ├── admin/AdminPanel.jsx    ← painel administrativo
+│   ├── hooks/                   ← useMarket, useMacro, useSecretAdmin
+│   ├── data/                     ← catálogo de ações, cursos, eventos
+│   ├── lib/                       ← format.js, userData.js (sync Supabase ⇄ localStorage)
+│   └── supabase.js                ← client Supabase
+├── supabase_duels.sql      ← schema SQL do sistema de duelos
+└── SUPABASE_SETUP.md       ← schema completo + políticas de RLS
 ```
 
 ---
 
 ## Pré-requisitos
 
-- **Node.js 18+** → https://nodejs.org (baixe a versão LTS)
-- **Conta no GitHub** → https://github.com (gratuita)
-- **Conta na Vercel** → https://vercel.com (gratuita, login com GitHub)
+- **Node.js 18+** → https://nodejs.org
+- **Conta no Supabase** (gratuita) → https://supabase.com
+- **Conta na Vercel** (gratuita, login com GitHub) → https://vercel.com
 
 ---
 
-## Passo a passo completo
+## Rodando localmente
 
-### 1. Instalar dependências (uma vez só)
+### 1. Instalar dependências
 
 ```bash
 npm install
 ```
 
-### 2. Testar local antes de publicar
+### 2. Configurar o banco (Supabase)
+
+Siga o passo a passo completo em [`SUPABASE_SETUP.md`](./SUPABASE_SETUP.md): cria as tabelas `profiles`, `portfolio`, `trades`, `progress` e `duels` (este último via [`supabase_duels.sql`](./supabase_duels.sql)), todas com Row Level Security.
+
+### 3. Variáveis de ambiente
+
+Crie `.env.local` na raiz de `app/`:
+```
+VITE_SUPABASE_URL=https://SEU_PROJETO.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+> As funções em `api/` usam variáveis **server-side** (não prefixadas com `VITE_`), configuradas só na Vercel em produção:
+> - `ANTHROPIC_API_KEY` — habilita a Finny (IA). Sem ela, a IA retorna mensagem de indisponibilidade, sem quebrar o app.
+> - `HG_BRASIL_KEY` — dados macro em tempo real. Sem ela, usa valores padrão (`DEFAULTS` em `api/macro.js`).
+> - `ADMIN_SECRET` — token do painel admin. Tem fallback de desenvolvimento no código, mas **deve ser sobrescrito em produção**.
+
+### 4. Rodar
 
 ```bash
 npm run dev
 ```
 
-Abre em `http://localhost:5173`. Aqui o Brapi.dev **funciona normalmente**.
-
-### 3. Subir para o GitHub
-
-```bash
-git init
-git add .
-git commit -m "FinQuest v1"
-```
-
-Crie um repositório novo em https://github.com/new (pode ser privado), depois:
-
-```bash
-git remote add origin https://github.com/SEU_USUARIO/finquest.git
-git push -u origin main
-```
-
-### 4. Publicar na Vercel
-
-1. Acesse https://vercel.com e faça login com o GitHub
-2. Clique em **"Add New Project"**
-3. Selecione o repositório `finquest`
-4. Configurações (já detectadas automaticamente pelo Vite):
-   - **Framework**: Vite
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `dist`
-5. Clique em **Deploy**
-
-Em ~2 minutos o app estará live em `https://finquest.vercel.app` (ou nome customizado).
+Abre em `http://localhost:5173`.
 
 ---
 
-## Preços em tempo real (Brapi.dev)
+## Deploy (Vercel)
 
-O app já está configurado para buscar preços reais da B3 automaticamente.
+1. Suba o repositório para o GitHub (`git push`).
+2. Em https://vercel.com → **Add New Project** → selecione o repositório, com **Root Directory = `app`**.
+3. Framework detectado automaticamente: Vite (`npm run build`, output `dist/`).
+4. Em **Settings → Environment Variables**, adicione: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `ANTHROPIC_API_KEY`, `HG_BRASIL_KEY`, `ADMIN_SECRET`.
+5. **Deploy**. Pushes subsequentes em `main` republicam automaticamente (CI/CD).
 
-- Atualiza ao abrir o app
-- Atualiza a cada **5 minutos** automaticamente
-- Botão manual "🔄 Atualizar" no Dashboard e no Simulador
-- Se a API cair, exibe o último fechamento conhecido como fallback
-
-**Não é necessário fazer nada**, funciona automaticamente após o deploy.
-
-Se quiser mais requisições ou dados extras (histórico longo, FIIs, fundamentos), crie uma conta em https://brapi.dev e substitua `?token=demo` pela sua chave no arquivo `App.jsx`.
+Produção atual: **https://finquest-app-omega.vercel.app**
 
 ---
 
-## Atualizações futuras
+## Cotações de mercado
 
-Para atualizar o app depois de fazer mudanças:
+O simulador busca preços reais da B3 via Yahoo Finance, através de `api/stocks.js` (sem precisar de chave — usa o endpoint público `/v8/finance/chart`, com fallback entre `query1` e `query2`).
 
-```bash
-git add .
-git commit -m "descrição da mudança"
-git push
-```
-
-A Vercel detecta o push e republica automaticamente em ~1 minuto.
+- Atualiza ao abrir o app e a cada poucos minutos automaticamente (`useMarket`).
+- Botão manual "🔄 Atualizar" no Dashboard e no Simulador.
+- Se a API cair, exibe o último fechamento conhecido como fallback.
 
 ---
 
-## Acesso Admin
+## Acesso de teste (avaliação)
 
-Digite `finquestadmin` no teclado (fora de qualquer campo de texto) em qualquer tela do app.
-Credenciais: `admin@finquest.com` / `admin123`
+Ver [README principal](../README.md#acesso-de-teste) para a conta demo e instruções de auto-cadastro.
