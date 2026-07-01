@@ -2,9 +2,9 @@
 
 **Plataforma de educação financeira gamificada.** Simulador de investimentos com ativos reais da B3, trilhas de aprendizagem por níveis, competições entre usuários e uma IA tutora - para quem quer aprender a investir praticando, sem arriscar dinheiro de verdade.
 
-🔗 **Aplicação em produção:** https://finquest-app-omega.vercel.app
-💻 **Código-fonte da aplicação:** [`app/`](app/) - ver [README técnico](app/README.md) para instruções de execução local
-🎓 **Projeto de Portfólio (TCC)** - Católica SC, linha Web Apps
+- 🔗 **Aplicação em produção:** https://finquest-app-omega.vercel.app
+- 💻 **Código-fonte da aplicação:** [`app/`](app/) - ver [README técnico](app/README.md) para instruções de execução local
+- 🎓 **Projeto de Portfólio (TCC)** - Católica SC, linha Web Apps
 
 ---
 
@@ -48,6 +48,31 @@ FinQuest junta três coisas que normalmente vêm separadas: **simulação com da
 Isso cobre, com folga, os **três fluxos de negócio completos** exigidos para a linha Web Apps: autenticação + simulação de carteira, trilha de aprendizagem com progresso, e competição multiplayer.
 
 ---
+## Capturas de Tela
+
+**Mobile**
+
+<p align="center">
+  <img width="110" height="210" alt="dashboard" src="https://github.com/user-attachments/assets/83381a2e-3c3c-42d3-8b10-5244afa61405" />
+  <img width="110" height="210" alt="simulador" src="https://github.com/user-attachments/assets/c927e874-2194-4a3f-a836-55c53f040618" />
+  <img width="110" height="210" alt="ranking" src="https://github.com/user-attachments/assets/ba35e2bf-0e5f-4a12-bfb1-b061b4ba8ee1" />
+  <img width="110" height="210" alt="duelo" src="https://github.com/user-attachments/assets/8411d15c-9f61-439c-a431-b7b1341d12ca" />
+  <img width="110" height="210" alt="academy" src="https://github.com/user-attachments/assets/d5294b7d-aac9-4f78-80c4-64804fcb2342" />
+  <img width="110" height="210" alt="finny" src="https://github.com/user-attachments/assets/fabccd52-e3d2-44e5-84f3-48ec6ee1d70a" />
+</p>
+
+**Web**
+
+<p align="center">
+  <img width="330"  alt="image" src="https://github.com/user-attachments/assets/dae10b1a-9b5d-4498-8e90-b608373832d4" />
+  <img width="330"  alt="image" src="https://github.com/user-attachments/assets/a7e4d998-601d-48d0-ba9a-19c0dc53d5ec" />
+  <img width="330"  alt="image" src="https://github.com/user-attachments/assets/c05b1399-0923-44dd-aaea-7bf60edcacf3" />
+  <img width="330"  alt="image" src="https://github.com/user-attachments/assets/64283f20-e524-4444-85b4-4a3d3abbc868" />
+  <img width="330"  alt="image" src="https://github.com/user-attachments/assets/b5ecfd5c-8274-43e0-848c-49165cc8e764" />
+</p>
+  
+
+</p>
 
 ## Arquitetura
 
