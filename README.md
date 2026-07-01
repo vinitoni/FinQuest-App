@@ -2,9 +2,9 @@
 
 **Plataforma de educação financeira gamificada.** Simulador de investimentos com ativos reais da B3, trilhas de aprendizagem por níveis, competições entre usuários e uma IA tutora - para quem quer aprender a investir praticando, sem arriscar dinheiro de verdade.
 
-🔗 **Aplicação em produção:** https://finquest-app-omega.vercel.app
-💻 **Código-fonte da aplicação:** [`app/`](app/) - ver [README técnico](app/README.md) para instruções de execução local
-🎓 **Projeto de Portfólio (TCC)** - Católica SC, linha Web Apps
+- 🔗 **Aplicação em produção:** https://finquest-app-omega.vercel.app
+- 💻 **Código-fonte da aplicação:** [`app/`](app/) - ver [README técnico](app/README.md) para instruções de execução local
+- 🎓 **Projeto de Portfólio (TCC)** - Católica SC, linha Web Apps
 
 ---
 
