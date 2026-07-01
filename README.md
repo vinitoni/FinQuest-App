@@ -188,7 +188,7 @@ Acesse `http://localhost:5173`. Instruções completas e detalhes de deploy em [
 
 - [`app/README.md`](app/README.md) - guia técnico de execução e deploy
 - [`app/SUPABASE_SETUP.md`](app/SUPABASE_SETUP.md) - schema do banco e políticas de segurança
-- [`saidas/tcc/DOCUMENTACAO.md`](saidas/tcc/DOCUMENTACAO.md) - documentação acadêmica (requisitos, arquitetura, decisões técnicas)
+- [`DOCUMENTACAO.md`](DOCUMENTACAO.md) - documentação acadêmica (requisitos, arquitetura, decisões técnicas)
 - [Wiki do repositório](../../wiki) - documentação complementar
 
 ---

@@ -5,7 +5,7 @@
 > Repositório: https://github.com/vinitoni/FinQuest-App
 > Aplicação em produção: https://finquest-app-omega.vercel.app
 
-Este documento complementa o [README principal](../../README.md) com o detalhamento exigido pelas diretrizes da disciplina: contexto, requisitos, arquitetura, decisões técnicas e conformidade.
+Este documento complementa o [README principal](README.md) com o detalhamento exigido pelas diretrizes da disciplina: contexto, requisitos, arquitetura, decisões técnicas e conformidade.
 
 ---
 
@@ -114,7 +114,7 @@ profiles (1) ──< progress (N)        - módulos concluídos
 profiles (N) ──< duels >── (N) profiles  - duelos com carteiras independentes
 ```
 
-Detalhamento completo do schema, com SQL e políticas de RLS, em [`app/SUPABASE_SETUP.md`](../../app/SUPABASE_SETUP.md) e [`app/supabase_duels.sql`](../../app/supabase_duels.sql).
+Detalhamento completo do schema, com SQL e políticas de RLS, em [`app/SUPABASE_SETUP.md`](app/SUPABASE_SETUP.md) e [`app/supabase_duels.sql`](app/supabase_duels.sql).
 
 ---
 
@@ -141,7 +141,7 @@ Detalhamento completo do schema, com SQL e políticas de RLS, em [`app/SUPABASE_
 
 ## 10. Instruções de Deploy
 
-Detalhadas em [`app/README.md`](../../app/README.md#deploy-vercel). Resumo: push em `main` → build automático via Vercel (CI/CD) → publicação em `https://finquest-app-omega.vercel.app`.
+Detalhadas em [`app/README.md`](app/README.md#deploy-vercel). Resumo: push em `main` → build automático via Vercel (CI/CD) → publicação em `https://finquest-app-omega.vercel.app`.
 
 ## 11. Referências
 
