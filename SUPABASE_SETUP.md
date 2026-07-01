@@ -1,4 +1,4 @@
-# FinQuest — Setup do Supabase
+# FinQuest - Setup do Supabase
 
 ## 1. Criar projeto no Supabase
 
@@ -9,7 +9,7 @@
    - **Name:** finquest
    - **Database Password:** escolha uma senha forte (guarde!)
    - **Region:** South America (São Paulo)
-5. Clique em **Create new project** — aguarde ~2 minutos
+5. Clique em **Create new project** - aguarde ~2 minutos
 
 ---
 
@@ -98,7 +98,7 @@ create policy "Usuário gerencia próprio progresso"
   on progress for all using (auth.uid() = user_id);
 ```
 
-Execute cada bloco separadamente. Você verá **"Success. No rows returned"** em cada um — isso é normal.
+Execute cada bloco separadamente. Você verá **"Success. No rows returned"** em cada um - isso é normal.
 
 ---
 

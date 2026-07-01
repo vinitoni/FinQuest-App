@@ -1,16 +1,16 @@
 # FinQuest
 
-**Plataforma de educação financeira gamificada.** Simulador de investimentos com ativos reais da B3, trilhas de aprendizagem por níveis, competições entre usuários e uma IA tutora — para quem quer aprender a investir praticando, sem arriscar dinheiro de verdade.
+**Plataforma de educação financeira gamificada.** Simulador de investimentos com ativos reais da B3, trilhas de aprendizagem por níveis, competições entre usuários e uma IA tutora - para quem quer aprender a investir praticando, sem arriscar dinheiro de verdade.
 
 🔗 **Aplicação em produção:** https://finquest-app-omega.vercel.app
-💻 **Código-fonte da aplicação:** [`app/`](app/) — ver [README técnico](app/README.md) para instruções de execução local
-🎓 **Projeto de Portfólio (TCC)** — Católica SC, linha Web Apps
+💻 **Código-fonte da aplicação:** [`app/`](app/) - ver [README técnico](app/README.md) para instruções de execução local
+🎓 **Projeto de Portfólio (TCC)** - Católica SC, linha Web Apps
 
 ---
 
 ## Acesso de teste
 
-Não é necessário ter uma conta — o cadastro é gratuito e instantâneo (recebe R$100.000 virtuais na hora). Para avaliação rápida, também há uma conta demo pronta:
+Não é necessário ter uma conta - o cadastro é gratuito e instantâneo (recebe R$100.000 virtuais na hora). Para avaliação rápida, também há uma conta demo pronta:
 
 | Campo | Valor |
 |---|---|
@@ -28,7 +28,7 @@ Brasileiros querem investir, mas a maioria não se sente segura: falta de educa�
 
 ## A solução
 
-FinQuest junta três coisas que normalmente vêm separadas: **simulação com dados reais**, **conteúdo estruturado por nível** e **gamificação** que dá feedback imediato — para que o usuário aprenda *fazendo*, com risco zero.
+FinQuest junta três coisas que normalmente vêm separadas: **simulação com dados reais**, **conteúdo estruturado por nível** e **gamificação** que dá feedback imediato - para que o usuário aprenda *fazendo*, com risco zero.
 
 ---
 
@@ -60,7 +60,7 @@ Isso cobre, com folga, os **três fluxos de negócio completos** exigidos para a
                │ fetch
                ▼
 ┌─────────────────────────────┐
-│  Backend (Vercel Functions) │  → app/api/*.js — serverless, Node runtime
+│  Backend (Vercel Functions) │  → app/api/*.js - serverless, Node runtime
 │  stocks · macro · news      │     proxy + lógica própria, esconde
 │  ai · admin-update          │     chaves de API do client
 └──────────────┬──────────────┘
@@ -72,9 +72,9 @@ Isso cobre, com folga, os **três fluxos de negócio completos** exigidos para a
 ```
 
 **Justificativa técnica da stack** (em relação às diretrizes da linha Web Apps sobre Vercel/Supabase "sem gestão de arquitetura"):
-- O backend **não é apenas hospedagem estática**: [`app/api/`](app/api) contém funções serverless desenvolvidas pelo autor que fazem proxy autenticado a três APIs externas, escondem chaves secretas do client (`ANTHROPIC_API_KEY`, `HG_BRASIL_KEY`, `ADMIN_SECRET`) e implementam lógica própria — fallback de cotações entre hosts do Yahoo, análise de sentimento de notícias por palavras-chave, validação de admin por token Bearer.
-- O Supabase é usado como **Postgres gerenciado com Row Level Security desenhada pelo autor** (ver [`app/SUPABASE_SETUP.md`](app/SUPABASE_SETUP.md) e [`app/supabase_duels.sql`](app/supabase_duels.sql)) — schema, políticas de acesso por usuário e funções de domínio (duelos, progresso, trades) são autorais, não geradas automaticamente por ferramenta no-code.
-- Não há uso de builders visuais, backend automático sem controle de schema, nem deploy via SSH/FTP — o pipeline é Git push → build Vite → deploy Vercel, com [`app/vercel.json`](app/vercel.json) controlando rewrites.
+- O backend **não é apenas hospedagem estática**: [`app/api/`](app/api) contém funções serverless desenvolvidas pelo autor que fazem proxy autenticado a três APIs externas, escondem chaves secretas do client (`ANTHROPIC_API_KEY`, `HG_BRASIL_KEY`, `ADMIN_SECRET`) e implementam lógica própria - fallback de cotações entre hosts do Yahoo, análise de sentimento de notícias por palavras-chave, validação de admin por token Bearer.
+- O Supabase é usado como **Postgres gerenciado com Row Level Security desenhada pelo autor** (ver [`app/SUPABASE_SETUP.md`](app/SUPABASE_SETUP.md) e [`app/supabase_duels.sql`](app/supabase_duels.sql)) - schema, políticas de acesso por usuário e funções de domínio (duelos, progresso, trades) são autorais, não geradas automaticamente por ferramenta no-code.
+- Não há uso de builders visuais, backend automático sem controle de schema, nem deploy via SSH/FTP - o pipeline é Git push → build Vite → deploy Vercel, com [`app/vercel.json`](app/vercel.json) controlando rewrites.
 
 ### Camadas (frontend)
 
@@ -100,7 +100,7 @@ app/src/
 | `progress` | Módulos da Academy concluídos por usuário |
 | `duels` | Duelos de carteira: estado, participantes, carteiras independentes, prazo |
 
-Todas as tabelas têm **Row Level Security** ativada — cada usuário só lê/escreve seus próprios dados. Detalhes e SQL completo em [`app/SUPABASE_SETUP.md`](app/SUPABASE_SETUP.md).
+Todas as tabelas têm **Row Level Security** ativada - cada usuário só lê/escreve seus próprios dados. Detalhes e SQL completo em [`app/SUPABASE_SETUP.md`](app/SUPABASE_SETUP.md).
 
 ---
 
@@ -143,7 +143,7 @@ Acesse `http://localhost:5173`. Instruções completas e detalhes de deploy em [
 
 ## Segurança e conformidade
 
-- **Chaves de API nunca expostas no client** — `ANTHROPIC_API_KEY`, `HG_BRASIL_KEY` e `ADMIN_SECRET` vivem só no ambiente serverless da Vercel; o frontend chama `/api/*`, nunca a API externa diretamente.
+- **Chaves de API nunca expostas no client** - `ANTHROPIC_API_KEY`, `HG_BRASIL_KEY` e `ADMIN_SECRET` vivem só no ambiente serverless da Vercel; o frontend chama `/api/*`, nunca a API externa diretamente.
 - **Row Level Security** no Supabase: cada usuário só acessa seus próprios registros de carteira, trades e progresso.
 - **`.env.local` fora do controle de versão** (`.gitignore` na raiz do repositório).
 - **LGPD**: dados coletados (nome, e-mail) são mínimos e necessários à autenticação; sem coleta de dados sensíveis.
@@ -153,10 +153,10 @@ Acesse `http://localhost:5173`. Instruções completas e detalhes de deploy em [
 
 ## Documentação completa
 
-- [`app/README.md`](app/README.md) — guia técnico de execução e deploy
-- [`app/SUPABASE_SETUP.md`](app/SUPABASE_SETUP.md) — schema do banco e políticas de segurança
-- [`saidas/tcc/DOCUMENTACAO.md`](saidas/tcc/DOCUMENTACAO.md) — documentação acadêmica (requisitos, arquitetura, decisões técnicas)
-- [Wiki do repositório](../../wiki) — documentação complementar
+- [`app/README.md`](app/README.md) - guia técnico de execução e deploy
+- [`app/SUPABASE_SETUP.md`](app/SUPABASE_SETUP.md) - schema do banco e políticas de segurança
+- [`saidas/tcc/DOCUMENTACAO.md`](saidas/tcc/DOCUMENTACAO.md) - documentação acadêmica (requisitos, arquitetura, decisões técnicas)
+- [Wiki do repositório](../../wiki) - documentação complementar
 
 ---
 
@@ -164,4 +164,4 @@ Acesse `http://localhost:5173`. Instruções completas e detalhes de deploy em [
 
 FinQuest é o projeto de Portfólio (TCC) desenvolvido individualmente para a Católica SC, linha **Web Apps**.
 
-**Autor:** Vinícius — [faculdogpt@gmail.com](mailto:faculdogpt@gmail.com)
+**Autor:** Vinícius - [vinitonii@gmail.com](mailto:vinitonii@gmail.com)

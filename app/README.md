@@ -1,4 +1,4 @@
-# FinQuest — Guia Técnico
+# FinQuest - Guia Técnico
 
 > Visão geral do produto, funcionalidades e arquitetura: [README principal](../README.md).
 > Este documento cobre **execução local, configuração e deploy**.
@@ -61,9 +61,9 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
 > As funções em `api/` usam variáveis **server-side** (não prefixadas com `VITE_`), configuradas só na Vercel em produção:
-> - `ANTHROPIC_API_KEY` — habilita a Finny (IA). Sem ela, a IA retorna mensagem de indisponibilidade, sem quebrar o app.
-> - `HG_BRASIL_KEY` — dados macro em tempo real. Sem ela, usa valores padrão (`DEFAULTS` em `api/macro.js`).
-> - `ADMIN_SECRET` — token do painel admin. Tem fallback de desenvolvimento no código, mas **deve ser sobrescrito em produção**.
+> - `ANTHROPIC_API_KEY` - habilita a Finny (IA). Sem ela, a IA retorna mensagem de indisponibilidade, sem quebrar o app.
+> - `HG_BRASIL_KEY` - dados macro em tempo real. Sem ela, usa valores padrão (`DEFAULTS` em `api/macro.js`).
+> - `ADMIN_SECRET` - token do painel admin. Tem fallback de desenvolvimento no código, mas **deve ser sobrescrito em produção**.
 
 ### 4. Rodar
 
@@ -89,7 +89,7 @@ Produção atual: **https://finquest-app-omega.vercel.app**
 
 ## Cotações de mercado
 
-O simulador busca preços reais da B3 via Yahoo Finance, através de `api/stocks.js` (sem precisar de chave — usa o endpoint público `/v8/finance/chart`, com fallback entre `query1` e `query2`).
+O simulador busca preços reais da B3 via Yahoo Finance, através de `api/stocks.js` (sem precisar de chave - usa o endpoint público `/v8/finance/chart`, com fallback entre `query1` e `query2`).
 
 - Atualiza ao abrir o app e a cada poucos minutos automaticamente (`useMarket`).
 - Botão manual "🔄 Atualizar" no Dashboard e no Simulador.
