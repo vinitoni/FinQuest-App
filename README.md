@@ -3,7 +3,6 @@
 **Plataforma de educação financeira gamificada.** Simulador de investimentos com ativos reais da B3, trilhas de aprendizagem por níveis, competições entre usuários e uma IA tutora — para quem quer aprender a investir praticando, sem arriscar dinheiro de verdade.
 
 🔗 **Aplicação em produção:** https://finquest-app-omega.vercel.app
-📄 **Pôster do projeto (A0):** [`saidas/tcc/finquest-banner-a0.html`](saidas/tcc/finquest-banner-a0.html)
 💻 **Código-fonte da aplicação:** [`app/`](app/) — ver [README técnico](app/README.md) para instruções de execução local
 🎓 **Projeto de Portfólio (TCC)** — Católica SC, linha Web Apps
 
@@ -156,7 +155,7 @@ Acesse `http://localhost:5173`. Instruções completas e detalhes de deploy em [
 
 - [`app/README.md`](app/README.md) — guia técnico de execução e deploy
 - [`app/SUPABASE_SETUP.md`](app/SUPABASE_SETUP.md) — schema do banco e políticas de segurança
-- [`saidas/tcc/`](saidas/tcc/) — documentação acadêmica (RFC, arquitetura, decisões técnicas, pôster)
+- [`saidas/tcc/DOCUMENTACAO.md`](saidas/tcc/DOCUMENTACAO.md) — documentação acadêmica (requisitos, arquitetura, decisões técnicas)
 - [Wiki do repositório](../../wiki) — documentação complementar
 
 ---
