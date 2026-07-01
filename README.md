@@ -64,11 +64,11 @@ Isso cobre, com folga, os **três fluxos de negócio completos** exigidos para a
 **Web**
 
 <p align="center">
-  <img width="260"  alt="image" src="https://github.com/user-attachments/assets/dae10b1a-9b5d-4498-8e90-b608373832d4" />
-  <img width="260"  alt="image" src="https://github.com/user-attachments/assets/a7e4d998-601d-48d0-ba9a-19c0dc53d5ec" />
-  <img width="260"  alt="image" src="https://github.com/user-attachments/assets/c05b1399-0923-44dd-aaea-7bf60edcacf3" />
-  <img width="260"  alt="image" src="https://github.com/user-attachments/assets/64283f20-e524-4444-85b4-4a3d3abbc868" />
-  <img width="260"  alt="image" src="https://github.com/user-attachments/assets/b5ecfd5c-8274-43e0-848c-49165cc8e764" />
+  <img width="330"  alt="image" src="https://github.com/user-attachments/assets/dae10b1a-9b5d-4498-8e90-b608373832d4" />
+  <img width="330"  alt="image" src="https://github.com/user-attachments/assets/a7e4d998-601d-48d0-ba9a-19c0dc53d5ec" />
+  <img width="330"  alt="image" src="https://github.com/user-attachments/assets/c05b1399-0923-44dd-aaea-7bf60edcacf3" />
+  <img width="330"  alt="image" src="https://github.com/user-attachments/assets/64283f20-e524-4444-85b4-4a3d3abbc868" />
+  <img width="330"  alt="image" src="https://github.com/user-attachments/assets/b5ecfd5c-8274-43e0-848c-49165cc8e764" />
 </p>
   
 
