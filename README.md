@@ -72,7 +72,15 @@ Isso cobre, com folga, os **três fluxos de negócio completos** exigidos para a
 </p>
   
 
+## Vídeo de Demonstração
+
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=1B0Rp8hHM2Q">
+    <img src="https://img.youtube.com/vi/1B0Rp8hHM2Q/maxresdefault.jpg" width="560" alt="Assistir demonstração do FinQuest" />
+  </a>
 </p>
+
+<p align="center"><a href="https://www.youtube.com/watch?v=1B0Rp8hHM2Q">▶ Assistir no YouTube (7min)</a></p>
 
 ## Arquitetura
 
