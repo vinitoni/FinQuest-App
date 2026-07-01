@@ -114,7 +114,7 @@ export function SimPage({stocks,portfolio,cash,buyStock,sellStock,lastUpdated,mk
             }
           </div>
         </div>
-        <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+        <div className="sim-actions" style={{display:"flex",gap:10,flexWrap:"wrap"}}>
           <button className="btn bghost bsm" onClick={fetchPrices} disabled={mktLoading}>{mktLoading?<span className="spinner"/>:"🔄"}</button>
           <div className="card" style={{padding:"8px 15px"}}><div style={{fontSize:10,color:"var(--muted)"}}>Saldo</div><div className="syne" style={{fontWeight:800,color:"var(--g)",fontSize:15}}>{fmt(cash)}</div></div>
           <div className="card" style={{padding:"8px 15px"}}><div style={{fontSize:10,color:"var(--muted)"}}>Em carteira</div><div className="syne" style={{fontWeight:800,fontSize:15}}>{fmt(totalPort)}</div></div>
@@ -140,7 +140,7 @@ export function SimPage({stocks,portfolio,cash,buyStock,sellStock,lastUpdated,mk
       </div>
 
       {tab==="mkt"&&(
-        <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap",marginBottom:14,fontSize:13,color:"var(--muted)"}}>
+        <div className="sim-tip" style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap",marginBottom:14,fontSize:13,color:"var(--muted)"}}>
           <span>🎓 Novo na bolsa?</span>
           <button className="btn bghost bxs" onClick={()=>setInfo("codigo")}>O que significa PETR4, BBAS3?</button>
           <button className="btn bghost bxs" onClick={()=>setInfo("frac")}>Lote padrão x Fracionário (F)</button>
@@ -181,7 +181,8 @@ export function SimPage({stocks,portfolio,cash,buyStock,sellStock,lastUpdated,mk
 
           <div>
             {sel?(
-              <div style={{display:"flex",flexDirection:"column",gap:14}}>
+              <div className="trade-overlay" onClick={e=>e.target===e.currentTarget&&setSel(null)}>
+              <div className="trade-panel" style={{display:"flex",flexDirection:"column",gap:14}}>
                 <div className="card">
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
                     <div>
@@ -191,6 +192,7 @@ export function SimPage({stocks,portfolio,cash,buyStock,sellStock,lastUpdated,mk
                     <div style={{display:"flex",gap:6,alignItems:"center"}}>
                       <span className={`badge ${sel.change>=0?"bg":"br"}`}>{sel.change>=0?"▲":"▼"}{Math.abs(sel.change).toFixed(2)}%</span>
                       <button onClick={()=>setInfo("change")} style={{background:"rgba(77,158,255,.15)",border:"none",color:"var(--blue)",fontSize:10,fontWeight:700,cursor:"pointer",borderRadius:99,padding:"2px 8px"}}>i</button>
+                      <button onClick={()=>setSel(null)} className="trade-close">✕</button>
                     </div>
                   </div>
                   <div className="syne" style={{fontSize:28,fontWeight:800,marginBottom:10}}>R${sel.price.toFixed(2)}</div>
@@ -223,6 +225,7 @@ export function SimPage({stocks,portfolio,cash,buyStock,sellStock,lastUpdated,mk
                     <button className="btn bred" onClick={()=>setConfirm({type:"sell",ticker:sel.ticker,qty,price:sel.price})} disabled={!portfolio[sel.ticker]}>🔴 Vender</button>
                   </div>
                 </div>
+              </div>
               </div>
             ):(
               <div className="card" style={{textAlign:"center",padding:"56px 24px"}}>

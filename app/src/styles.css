@@ -110,6 +110,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);ove
 .anav{display:flex;align-items:center;gap:11px;padding:9px 14px;border-radius:8px;cursor:pointer;color:var(--muted);font-size:13.5px;font-weight:500;transition:all .15s;border:none;background:none;width:100%;text-align:left;}
 .anav:hover{background:var(--sf);color:var(--text);}
 .anav.act{background:rgba(245,200,66,.1);color:var(--gold);}
+.trade-close{display:none;}
 .bottom-nav{display:none;}
 @media(max-width:960px) and (min-width:701px){
   .sidebar{width:56px;}
@@ -139,6 +140,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);ove
   .scroll-x::-webkit-scrollbar{height:3px;}
   /* botão redundante (linha já é clicável) some no mobile pra tabela caber sem rolagem */
   .mkt-op{display:none;}
+  /* painel de negociação vira overlay centralizado no mobile, em vez de empilhar embaixo da lista */
+  .trade-overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.7);display:flex;
+    align-items:center;justify-content:center;padding:16px;}
+  .trade-panel{width:100%;max-width:420px;max-height:88vh;overflow-y:auto;}
+  .trade-close{display:inline-flex!important;background:none;border:none;color:var(--muted);
+    cursor:pointer;font-size:16px;padding:2px 4px;}
+  .topbar{align-items:center;text-align:center;}
+  .topbar>div:first-child{width:100%;}
+  .topbar .psub{justify-content:center;}
+  .sim-actions{justify-content:center;width:100%;}
+  .sim-tip{justify-content:center;text-align:center;}
+  .tabs{width:100%!important;justify-content:center;margin-left:auto;margin-right:auto;}
   /* sidebar lateral vira barra inferior no mobile: menos itens visíveis, mais espaço útil na tela */
   .sidebar{display:none;}
   .main{margin-left:0;}
