@@ -73,7 +73,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);ove
 .rich strong{color:var(--g);}
 .rich em{color:var(--gold);}
 .rich blockquote{border-left:3px solid var(--g);padding:9px 15px;background:rgba(0,214,143,.06);border-radius:0 8px 8px 0;margin:10px 0;font-weight:600;font-size:14.5px;}
-.qopt{padding:12px 15px;border-radius:9px;border:1px solid var(--b);background:var(--bg2);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:500;text-align:left;transition:all .18s;width:100%;}
+.qopt{padding:12px 15px;border-radius:9px;border:1px solid var(--b);background:var(--bg2);color:var(--text);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:500;text-align:left;transition:all .18s;width:100%;}
+.qopt:disabled{opacity:1;}
 .qopt:hover:not(:disabled){border-color:var(--blue);background:rgba(77,158,255,.06);}
 .qopt.qc{border-color:var(--g)!important;background:rgba(0,214,143,.1)!important;color:var(--g)!important;}
 .qopt.qw{border-color:var(--red)!important;background:rgba(255,82,82,.1)!important;color:var(--red)!important;}
