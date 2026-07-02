@@ -7,14 +7,22 @@ import { ChartTip } from "../components/ChartTip";
 export function DashPage({cash,totalWealth,pnl,portfolio,stocks,xp,xpPct,level,LVL_NAMES,courses,progress,trades,lastUpdated,mktLoading,apiStatus,fetchPrices,macro}){
   const totalPort=totalWealth-cash;
   // Trajetória real da carteira: reconstruída a partir das operações de fato feitas pelo
-  // usuário (custo médio em cada ponto passado, preço ao vivo só no ponto "Hoje"). O CDI usa
-  // a taxa mensal real (HG Brasil), compondo um passo por operação, como referência aproximada
-  // no mesmo intervalo — sem inventar uma série histórica de Ibovespa que não temos como obter.
-  const monthlyRate=(macro?.cdi||13.75)/100/12;
+  // usuário (custo médio em cada ponto passado, preço ao vivo só no ponto "Hoje"). O CDI
+  // usa a taxa diária real (derivada do CDI a.a. do HG Brasil) composta pelos dias corridos
+  // reais entre cada operação e hoje — não por quantidade de operações (10 compras no mesmo
+  // dia não podem valer 10 meses de CDI).
+  function parseBRDate(s){
+    const m=s&&s.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+    return m?new Date(+m[3],+m[2]-1,+m[1]):null;
+  }
+  const dailyRate=Math.pow(1+(macro?.cdi||13.75)/100,1/365)-1;
   const benchData=useMemo(()=>{
     const chrono=[...trades].reverse(); // trades entram no topo (mais recente primeiro); invertendo fica cronológico
+    const firstDate=chrono.length?parseBRDate(chrono[0].date):null;
+    const now=new Date();
+    const daysSince=d=>d?Math.max(0,(now-d)/86400000):0;
     let cash2=100000,port={};
-    const points=[{m:"Início",Carteira:100000}];
+    const points=[{m:"Início",Carteira:100000,CDI:100000}];
     chrono.forEach((t,i)=>{
       if(t.type==="buy"){
         cash2-=t.price*t.qty;
@@ -27,14 +35,17 @@ export function DashPage({cash,totalWealth,pnl,portfolio,stocks,xp,xpPct,level,L
         if(prev){const nq=prev.qty-t.qty; if(nq<=0) delete port[t.ticker]; else port[t.ticker]={...prev,qty:nq};}
       }
       const portValue=Object.values(port).reduce((s,p)=>s+p.avgPrice*p.qty,0);
-      points.push({m:"Op."+(i+1),Carteira:Math.round(cash2+portValue)});
+      const tDate=parseBRDate(t.date);
+      const elapsed=firstDate&&tDate?daysSince(firstDate)-daysSince(tDate):0;
+      points.push({m:"Op."+(i+1),Carteira:Math.round(cash2+portValue),CDI:Math.round(100000*Math.pow(1+dailyRate,elapsed))});
     });
-    if(points.length===1) points.push({m:"Hoje",Carteira:Math.round(totalWealth)});
-    else points[points.length-1]={...points[points.length-1],m:"Hoje",Carteira:Math.round(totalWealth)};
-    let cdi=100000;
-    return points.map((p,i)=>{ if(i>0) cdi*=1+monthlyRate; return{...p,CDI:Math.round(cdi)}; });
+    const totalDays=daysSince(firstDate);
+    const lastCdi=Math.round(100000*Math.pow(1+dailyRate,totalDays));
+    if(points.length===1) points.push({m:"Hoje",Carteira:Math.round(totalWealth),CDI:lastCdi});
+    else points[points.length-1]={...points[points.length-1],m:"Hoje",Carteira:Math.round(totalWealth),CDI:lastCdi};
+    return points;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[trades,totalWealth,monthlyRate]);
+  },[trades,totalWealth,dailyRate]);
 
   const doneMod=Object.values(progress).reduce((s,set)=>s+set.size,0);
   const totalMod=courses.reduce((s,c)=>s+c.modules.length,0);
