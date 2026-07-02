@@ -55,6 +55,39 @@ async function fetchOne(symbol) {
   throw lastErr || new Error("falha");
 }
 
+// Segunda camada de fallback: brapi.dev. Sem token só libera as 4 ações de teste
+// (PETR4, VALE3, ITUB4, MGLU3); com BRAPI_TOKEN configurado na Vercel, libera qualquer
+// ativo. Só é chamada para os tickers que a Yahoo não conseguiu responder.
+const BRAPI_FREE = new Set(["PETR4", "VALE3", "ITUB4", "MGLU3"]);
+
+async function fetchFromBrapi(symbols) {
+  const token = process.env.BRAPI_TOKEN;
+  const usable = token ? symbols : symbols.filter(s => BRAPI_FREE.has(s));
+  if (!usable.length) return {};
+  try {
+    const url = `https://brapi.dev/api/quote/${usable.join(",")}${token ? `?token=${token}` : ""}`;
+    const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!r.ok) return {};
+    const data = await r.json();
+    const map = {};
+    (data.results || []).forEach(q => {
+      if (q.regularMarketPrice != null) {
+        map[q.symbol] = {
+          symbol: q.symbol,
+          regularMarketPrice: q.regularMarketPrice,
+          regularMarketChangePercent: q.regularMarketChangePercent ?? null,
+          regularMarketDayHigh: q.regularMarketDayHigh ?? null,
+          regularMarketDayLow: q.regularMarketDayLow ?? null,
+          regularMarketVolume: q.regularMarketVolume ?? null,
+        };
+      }
+    });
+    return map;
+  } catch {
+    return {};
+  }
+}
+
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   // cache de borda: 1 min fresco + serve stale por 2 min enquanto revalida
@@ -65,13 +98,25 @@ export default async function handler(req, res) {
   const list = symbols.split(",").map(s => `${s.trim()}.SA`);
 
   const settled = await Promise.allSettled(list.map(fetchOne));
-  const results = settled.filter(s => s.status === "fulfilled").map(s => s.value);
+  let results = settled.map(s => (s.status === "fulfilled" ? s.value : null));
 
-  if (!results.length) {
+  // camada 2: o que a Yahoo não trouxe, tenta na brapi.dev
+  const missing = list.filter((_, i) => !results[i]).map(s => s.replace(".SA", ""));
+  if (missing.length) {
+    const brapiMap = await fetchFromBrapi(missing);
+    results = results.map((r, i) => {
+      if (r) return r;
+      const sym = list[i].replace(".SA", "");
+      return brapiMap[sym] || null;
+    });
+  }
+
+  const finalResults = results.filter(Boolean);
+  if (!finalResults.length) {
     const firstErr = settled.find(s => s.status === "rejected");
     return res.status(503).json({ error: firstErr?.reason?.message || "todas as cotações falharam" });
   }
 
-  // Retorna o que conseguiu (parcial é melhor que nada, o front mantém fallback nos faltantes)
-  return res.status(200).json({ results });
+  // Retorna o que conseguiu (parcial é melhor que nada, o front mantém fallback estático nos faltantes)
+  return res.status(200).json({ results: finalResults });
 }
