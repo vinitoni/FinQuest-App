@@ -6,23 +6,39 @@ import { ChartTip } from "../components/ChartTip";
 
 export function DashPage({cash,totalWealth,pnl,portfolio,stocks,xp,xpPct,level,LVL_NAMES,courses,progress,trades,lastUpdated,mktLoading,apiStatus,fetchPrices,macro}){
   const totalPort=totalWealth-cash;
-  // Benchmark data usando CDI real do HG Brasil
+  // Trajetória real da carteira: reconstruída a partir das operações de fato feitas pelo
+  // usuário (custo médio em cada ponto passado, preço ao vivo só no ponto "Hoje"). O CDI usa
+  // a taxa mensal real (HG Brasil), compondo um passo por operação, como referência aproximada
+  // no mesmo intervalo — sem inventar uma série histórica de Ibovespa que não temos como obter.
+  const monthlyRate=(macro?.cdi||13.75)/100/12;
   const benchData=useMemo(()=>{
-    const months=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
-    let cart=100000,cdi=100000,ibov=100000;
-    const monthlyRate=(macro?.cdi||13.75)/100/12;
-    return months.slice(0,8).map(m=>{
-      cart+=(Math.random()-.38)*6500;
-      cdi*=1+monthlyRate;
-      ibov+=(Math.random()-.46)*9000;
-      return{m,Carteira:Math.round(cart),CDI:Math.round(cdi),Ibovespa:Math.round(Math.max(ibov,60000))};
+    const chrono=[...trades].reverse(); // trades entram no topo (mais recente primeiro); invertendo fica cronológico
+    let cash2=100000,port={};
+    const points=[{m:"Início",Carteira:100000}];
+    chrono.forEach((t,i)=>{
+      if(t.type==="buy"){
+        cash2-=t.price*t.qty;
+        const prev=port[t.ticker]||{qty:0,avgPrice:0};
+        const nq=prev.qty+t.qty;
+        port[t.ticker]={qty:nq,avgPrice:((prev.avgPrice*prev.qty)+(t.price*t.qty))/nq};
+      }else{
+        cash2+=t.price*t.qty;
+        const prev=port[t.ticker];
+        if(prev){const nq=prev.qty-t.qty; if(nq<=0) delete port[t.ticker]; else port[t.ticker]={...prev,qty:nq};}
+      }
+      const portValue=Object.values(port).reduce((s,p)=>s+p.avgPrice*p.qty,0);
+      points.push({m:"Op."+(i+1),Carteira:Math.round(cash2+portValue)});
     });
-  },[macro?.cdi]);
+    if(points.length===1) points.push({m:"Hoje",Carteira:Math.round(totalWealth)});
+    else points[points.length-1]={...points[points.length-1],m:"Hoje",Carteira:Math.round(totalWealth)};
+    let cdi=100000;
+    return points.map((p,i)=>{ if(i>0) cdi*=1+monthlyRate; return{...p,CDI:Math.round(cdi)}; });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[trades,totalWealth,monthlyRate]);
 
   const doneMod=Object.values(progress).reduce((s,set)=>s+set.size,0);
   const totalMod=courses.reduce((s,c)=>s+c.modules.length,0);
   const cdiReturn=((benchData[benchData.length-1].CDI-100000)/100000*100);
-  const ibovReturn=((benchData[benchData.length-1].Ibovespa-100000)/100000*100);
   const myReturn=(pnl/100000*100);
 
   return(
@@ -66,7 +82,7 @@ export function DashPage({cash,totalWealth,pnl,portfolio,stocks,xp,xpPct,level,L
               <div className="syne" style={{fontSize:18,fontWeight:800}}>{fmt(totalWealth)}</div>
             </div>
             <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
-              {[["#00d68f","Carteira"],["#f5c842","CDI"],["#4d9eff","Ibovespa"]].map(([c,l])=>(
+              {[["#00d68f","Carteira"],["#f5c842","CDI"]].map(([c,l])=>(
                 <span key={l} style={{display:"flex",alignItems:"center",gap:5,fontSize:11,fontWeight:600}}>
                   <span style={{width:10,height:3,background:c,display:"inline-block",borderRadius:2}}/>  {l}
                 </span>
@@ -80,12 +96,12 @@ export function DashPage({cash,totalWealth,pnl,portfolio,stocks,xp,xpPct,level,L
               <Tooltip content={<ChartTip/>}/>
               <Line type="monotone" dataKey="Carteira" stroke="#00d68f" strokeWidth={2.5} dot={false} name="Carteira"/>
               <Line type="monotone" dataKey="CDI" stroke="#f5c842" strokeWidth={1.8} dot={false} strokeDasharray="5 3" name="CDI"/>
-              <Line type="monotone" dataKey="Ibovespa" stroke="#4d9eff" strokeWidth={1.8} dot={false} strokeDasharray="5 3" name="Ibovespa"/>
             </LineChart>
           </ResponsiveContainer>
+          <div style={{fontSize:10.5,color:"var(--muted)",marginTop:6}}>Carteira: trajetória real das suas operações (custo médio no histórico, preço ao vivo hoje). CDI: projeção com a taxa atual, como referência.</div>
           {macro?.ibovChange!=null&&<div style={{fontSize:11,color:"var(--muted)",marginTop:8}}>Ibovespa hoje: <span style={{color:macro.ibovChange>=0?"var(--g)":"var(--red)",fontWeight:700}}>{fmtP(macro.ibovChange)}</span>{macro?.ibov&&<span> · {Math.round(macro.ibov).toLocaleString("pt-BR")} pts</span>}</div>}
           <div style={{display:"flex",gap:10,marginTop:8}}>
-            {[["Carteira",myReturn,"var(--g)"],["CDI "+(macro?.cdi||"--")+"% a.a.",cdiReturn,"var(--gold)"],["Ibovespa",ibovReturn,"var(--blue)"]].map(([l,v,c])=>(
+            {[["Carteira",myReturn,"var(--g)"],["CDI "+(macro?.cdi||"--")+"% a.a.",cdiReturn,"var(--gold)"]].map(([l,v,c])=>(
               <div key={l} style={{flex:1,padding:"7px 10px",background:"var(--bg2)",borderRadius:8,textAlign:"center"}}>
                 <div style={{fontSize:10,color:"var(--muted)",marginBottom:2}}>{l}</div>
                 <div style={{fontSize:13,fontWeight:700,color:c}}>{fmtP(v)}</div>

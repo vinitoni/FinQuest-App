@@ -1,18 +1,43 @@
 // Calculadoras financeiras: juros compostos, aposentadoria e dividendos.
 import { useState } from "react";
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { ComposedChart, Area, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { fmt } from "../lib/format";
 import { ChartTip } from "../components/ChartTip";
+
+// Simula a mesma série (aporte inicial + mensal, por p meses) para uma taxa mensal dada,
+// pra comparar cenários lado a lado no mesmo gráfico.
+function simulate(i,m,p,monthlyRate){
+  let v=i;const d=[];
+  for(let k=0;k<=p;k+=6){d.push({mes:k===0?"Hoje":k+"m",value:Math.round(v)});for(let s=0;s<6&&k+s<p;s++) v=v*(1+monthlyRate)+m;}
+  return{d,final:v};
+}
 
 export function CalcPage({macro}){
   const[tab,setTab]=useState("j");
   const[j,setJ]=useState({i:10000,m:500,t:0.8,p:60});
+  const[compare,setCompare]=useState(true);
   const calcData=()=>{
-    let v=j.i;const d=[];
-    for(let i=0;i<=j.p;i+=6){d.push({mes:i===0?"Hoje":i+"m",value:Math.round(v)});for(let k=0;k<6&&i+k<j.p;k++) v=v*(1+j.t/100)+j.m;}
-    return{d,final:v,juros:v-j.i-(j.m*j.p)};
+    const{d,final}=simulate(j.i,j.m,j.p,j.t/100);
+    return{d,final,juros:final-j.i-(j.m*j.p)};
   };
   const{d,final,juros}=calcData();
+
+  // Referências reais: CDI e SELIC via HG Brasil; Tesouro Selic acompanha de perto a SELIC;
+  // poupança segue a regra oficial do Banco Central (0,5%/mês+TR se SELIC>8,5% a.a., senão 70% da SELIC+TR).
+  const selicAno=macro?.selic||13.75, cdiAno=macro?.cdi||13.75;
+  const poupancaAno=selicAno>8.5?6.17:selicAno*0.7; // TR ~0% no cenário atual
+  const refs=[
+    {key:"cdi",    label:"CDI",           color:"#f5c842", rate:cdiAno/100/12},
+    {key:"tesouro",label:"Tesouro Selic", color:"#4d9eff", rate:selicAno/100/12},
+    {key:"poup",   label:"Poupança",      color:"#ff9f43", rate:poupancaAno/100/12},
+  ].map(r=>({...r,...simulate(j.i,j.m,j.p,r.rate)}));
+
+  // Funde os pontos da simulação principal com os das referências, pelo mesmo índice de mês
+  const merged=d.map((pt,idx)=>{
+    const row={...pt};
+    refs.forEach(r=>{ row[r.key]=r.d[idx]?.value ?? r.final; });
+    return row;
+  });
   return(
     <div className="page">
       <div className="topbar">
@@ -42,15 +67,36 @@ export function CalcPage({macro}){
               <div style={{marginTop:6,fontSize:12,color:"var(--muted)"}}>Juros ganhos: <span style={{color:"var(--g)",fontWeight:700}}>{fmt(juros)}</span></div>
             </div>
             <div className="card">
-              <ResponsiveContainer width="100%" height={180}>
-                <AreaChart data={d}>
+              <label style={{display:"flex",alignItems:"center",gap:8,fontSize:12,color:"var(--muted)",marginBottom:10,cursor:"pointer"}}>
+                <input type="checkbox" checked={compare} onChange={e=>setCompare(e.target.checked)}/>
+                Comparar com CDI, Tesouro Selic e Poupança (taxas reais)
+              </label>
+              <ResponsiveContainer width="100%" height={200}>
+                <ComposedChart data={merged}>
                   <defs><linearGradient id="jg" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#00d68f" stopOpacity={.2}/><stop offset="95%" stopColor="#00d68f" stopOpacity={0}/></linearGradient></defs>
                   <XAxis dataKey="mes" tick={{fill:"var(--muted)",fontSize:10}} axisLine={false} tickLine={false}/>
                   <YAxis tick={{fill:"var(--muted)",fontSize:10}} axisLine={false} tickLine={false} tickFormatter={v=>`${(v/1000).toFixed(0)}k`}/>
                   <Tooltip content={<ChartTip/>}/>
-                  <Area type="monotone" dataKey="value" stroke="#00d68f" strokeWidth={2} fill="url(#jg)" name="Valor"/>
-                </AreaChart>
+                  {compare&&<Legend wrapperStyle={{fontSize:11}}/>}
+                  <Area type="monotone" dataKey="value" stroke="#00d68f" strokeWidth={2.5} fill="url(#jg)" name="Sua simulação"/>
+                  {compare&&refs.map(r=>(
+                    <Line key={r.key} type="monotone" dataKey={r.key} stroke={r.color} strokeWidth={1.6} strokeDasharray="5 3" dot={false} name={r.label}/>
+                  ))}
+                </ComposedChart>
               </ResponsiveContainer>
+              {compare&&(
+                <div style={{display:"flex",gap:8,marginTop:12,flexWrap:"wrap"}}>
+                  {[{label:"Sua simulação",v:final,c:"var(--g)"},...refs.map(r=>({label:r.label,v:r.final,c:r.color}))].map(x=>(
+                    <div key={x.label} style={{flex:"1 1 100px",padding:"7px 10px",background:"var(--bg2)",borderRadius:8,textAlign:"center"}}>
+                      <div style={{fontSize:10,color:"var(--muted)",marginBottom:2}}>{x.label}</div>
+                      <div style={{fontSize:12.5,fontWeight:700,color:x.c}}>{fmt(x.v)}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div style={{fontSize:10.5,color:"var(--muted)",marginTop:10}}>
+                Poupança: {poupancaAno.toFixed(2)}% a.a. (regra do BC: 0,5%/mês+TR se SELIC{'>'}8,5% a.a.) · Tesouro Selic ≈ taxa SELIC · CDI e SELIC via HG Brasil, atualizados.
+              </div>
             </div>
           </div>
         </div>
